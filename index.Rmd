@@ -1,0 +1,21 @@
+---
+title: "Integrating omics datasets across technologies and experiments"
+output:
+  html_document:
+    code_folding: hide
+    fig_height: 12
+    fig_width: 12
+---
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+## Datasets
+
++ Keren et al. (2018) A Structured Tumor-Immune Microenvironment in Triple Negative Breast Cancer Revealed by Multiplexed Ion Beam Imaging
++ Wagner et al. (2019) A Single-Cell Atlas of the Tumor and Immune Ecosystem of Human Breast Cancer
++ Jackson et al. (2018) The single-cell pathology landscape of breast cancer

@@ -1,0 +1,731 @@
+---
+title: "Preliminary Analysis"
+output:
+  html_document:
+    code_folding: hide
+    fig_height: 12
+    fig_width: 12
+    toc: yes
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, cache = TRUE, cache.lazy = TRUE)
+```
+
+
+# Data 
+
+```{r}
+library(scater)
+library(SingleCellExperiment)
+library(ggthemes)
+library(ggplot2)
+library(ggridges)
+library(plyr)
+library(raster)
+library(gridExtra)
+library(sp)
+library(spatstat)
+library(uwot)
+source("functions/image_analysis_function.R")
+set.seed(2020)
+```
+
+
+## Keren et al. 
+
+
+```{r}
+load("../../sc-targeted-proteomics/data/mibiSCE.rda")
+mibi.sce
+```
+
+
+```{r}
+cat("Patients information")
+table(mibi.sce$SampleID)
+
+cat("Cell types informaton")
+# table(mibi.sce$tumor_group)
+# table(mibi.sce$immune_group)
+
+# rename the cell types
+mibi.sce$cellTypes <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                             as.character(mibi.sce$immune_group),
+                             as.character(mibi.sce$tumor_group))
+
+table(mibi.sce$cellTypes)
+
+mibi.sce$cellTypes_group <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                                   "Micro-environment",
+                                   "Tumour")
+
+selected_chanel_mibi <- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+
+```
+
+
+```{r}
+# color for mibi cell types
+cellTypes_group_mibi_color <- tableau_color_pal("Tableau 10")(length(unique(mibi.sce$cellTypes_group)))
+cellTypes_group_mibi_color <- c(cellTypes_group_mibi_color, "black")
+names(cellTypes_group_mibi_color) <- c(unique(mibi.sce$cellTypes_group), "Background")
+
+cellTypes_mibi_color <- tableau_color_pal("Classic 20")(length(unique(mibi.sce$cellTypes)))
+cellTypes_mibi_color <- c(cellTypes_mibi_color, "black")
+names(cellTypes_mibi_color) <- c(unique(mibi.sce$cellTypes), "Background")
+```
+
+
+
+Visualising all cells using UMAP
+
+```{r}
+## Dimension Reduction using UMAP
+mibi.sce <- runUMAP(mibi.sce, exprs_values = "mibi_exprs", 
+                    feature_set = selected_chanel_mibi)
+g1 <- plotUMAP(mibi.sce, colour_by = "cellTypes") +
+  theme(aspect.ratio = 1)
+g2 <- plotUMAP(mibi.sce, colour_by = "cellTypes_group") +
+  theme(aspect.ratio = 1)
+g3 <- plotUMAP(mibi.sce, colour_by = "SampleID") +
+  theme(aspect.ratio = 1)
+
+grid.arrange(g1, g2, g3, ncol = 2)
+```
+
+
+
+Cell type composition 
+
+```{r fig.height=8}
+df_mibi <- data.frame(colData(mibi.sce))
+
+g1 <- ggplot(df_mibi, aes(x = SampleID, fill = cellTypes)) +
+  geom_bar() +
+  theme_bw() +
+  scale_fill_manual(values = cellTypes_mibi_color) +
+  theme(legend.position = "right")
+
+g2 <- ggplot(df_mibi, aes(x = SampleID, fill = cellTypes_group)) +
+  geom_bar() +
+  theme_bw() +
+  scale_fill_manual(values = cellTypes_group_mibi_color) +
+  theme(legend.position = "right")
+
+grid.arrange(g1, g2, ncol = 2)
+```
+
+
+## Jackson et al.
+
+```{r eval = FALSE}
+source("basel_preprocessing.R")
+```
+
+```{r}
+sc_mat <- readRDS("../../sc-targeted-proteomics/output/basel_sc_mat.rds")
+pg <- readRDS("../../sc-targeted-proteomics/output/basel_pg.rds")
+meta <- readRDS("../../sc-targeted-proteomics/output/basel_meta.rds")
+selected_chanel <- readRDS("../../sc-targeted-proteomics/output/basel_selected_chanel.rds")
+dim(sc_mat)
+
+
+sc_mat_norm <- apply(sc_mat, 2, scale)
+```
+
+
+```{r eval = FALSE}
+umap <- uwot::umap(sc_mat_norm[, selected_chanel])
+saveRDS(umap, file = "../../sc-targeted-proteomics/output/basel_umap.rds")
+```
+
+
+```{r}
+# color for mibi cell types
+
+cellTypes_basel_color <- sort(c(tableau_color_pal("Classic 20")(20),
+                                tableau_color_pal("Summer")(5)))
+cellTypes_basel_color <- c(cellTypes_basel_color, "black")
+names(cellTypes_basel_color) <- c(unique(pg$cluster_name), "Background")
+```
+
+
+Visualising all cells using UMAP
+
+```{r fig.height=8}
+basel_umap <- readRDS("../../sc-targeted-proteomics/output/basel_umap.rds")
+library(scattermore)
+
+pg$UMAP1 <- basel_umap[, 1]
+pg$UMAP2 <- basel_umap[, 2]
+g1 <- ggplot(pg, aes(x = UMAP1, y = UMAP2, color = cluster_name)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_basel_color) +
+  labs(color = "Cell Type")
+g1
+
+g2 <- ggplot(pg, aes(x = UMAP1, y = UMAP2, color = cluster_type)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_tableau() +
+  labs(color = "Cell Type")
+g2
+```
+
+
+Cell type composition 
+
+```{r fig.height=8}
+df_basel <- data.frame(pg)
+
+g1 <- ggplot(df_basel, aes(x = core, fill = cluster_name)) +
+  geom_bar() +
+  theme_bw() +
+  scale_fill_manual(values = cellTypes_basel_color) +
+  theme(legend.position = "right",
+        axis.text.x = element_blank())
+g1
+
+g2 <- ggplot(df_basel, aes(x = core, fill = cluster_type)) +
+  geom_bar() +
+  theme_bw() +
+  scale_fill_tableau() +
+  theme(legend.position = "right",
+        axis.text.x = element_blank())
+g2
+```
+
+
+
+# Overlapped features between two datasets
+
+```{r}
+# intersect(colnames(sc_mat), rownames(mibi.sce))
+# colnames(sc_mat)[!colnames(sc_mat) %in% rownames(mibi.sce)]
+rownames(mibi.sce)[!rownames(mibi.sce) %in% colnames(sc_mat)]
+rownames(mibi.sce)[rownames(mibi.sce) == "phospho-S6"] <- "pS6"
+rownames(mibi.sce)[rownames(mibi.sce) == "CD31"] <- "vWF"
+rownames(mibi.sce)[rownames(mibi.sce) == "Pan-Keratin"] <- "panCK"
+common_anti <- intersect(colnames(sc_mat), rownames(mibi.sce))
+cat("Common protein between two datasets")
+common_anti
+length(common_anti) 
+```
+
+```{r}
+mibi_exprs <- assay(mibi.sce, "mibi_exprs")
+mibi_exprs_common <- mibi_exprs[common_anti, ]
+sc_mat_common <- t(sc_mat_norm[, common_anti])
+```
+
+```{r eval = FALSE}
+umap_common <- uwot::umap(t(sc_mat_common))
+saveRDS(umap_common, file = "../../sc-targeted-proteomics/output/basel_umap_common.rds")
+
+umap_mibi_common <- uwot::umap(t(mibi_exprs_common))
+saveRDS(umap_mibi_common, file = "../../sc-targeted-proteomics/output/mibi_umap_common.rds")
+```
+
+
+```{r}
+basel_umap_common <- readRDS("../../sc-targeted-proteomics/output/basel_umap_common.rds")
+
+pg$UMAP1_common <- basel_umap_common[, 1]
+pg$UMAP2_common <- basel_umap_common[, 2]
+g1 <- ggplot(pg, aes(x = UMAP1_common, y = UMAP2_common, color = cluster_name)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_basel_color) +
+  labs(color = "Cell Type")
+g1
+
+g2 <- ggplot(pg, aes(x = UMAP1_common, y = UMAP2_common, color = cluster_type)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_tableau() +
+  labs(color = "Cell Type")
+
+g2
+```
+
+
+
+```{r}
+mibi_umap_common <- readRDS("../../sc-targeted-proteomics/output/mibi_umap_common.rds")
+
+df_mibi$UMAP1_common <- mibi_umap_common[, 1]
+df_mibi$UMAP2_common <- mibi_umap_common[, 2]
+g1 <- ggplot(df_mibi, aes(x = UMAP1_common, y = UMAP2_common, color = cellTypes)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_mibi_color) +
+  labs(color = "Cell Type")
+g1
+
+g2 <- ggplot(df_mibi, aes(x = UMAP1_common, y = UMAP2_common, color = cellTypes_group)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_tableau() +
+  labs(color = "Cell Type")
+
+g2
+```
+
+# Spatial Pattern Analysis
+
+Here we will use two images from Keren et al. and Jackson et al. as examples to show the image extraction procedure (The full image extraction codes are provided in `mibi_spatial_analysis.R` and `basel_spatial_analysis.R`).
+
+## Keren et al.
+
+```{r}
+tiff_name_list <- list.files("../../sc-targeted-proteomics/data/TNBC_shareCellData/", pattern = ".tiff")
+tiff_name_list <- tiff_name_list[-24] #filter p30
+
+tiff_name_list
+```
+
+
+
+
+
+Here we are extracting the spatial pattern features from `p1_labeledcellData.tiff`.
+
+```{r}
+s <- 1
+
+str_name <- paste("../../sc-targeted-proteomics/data/TNBC_shareCellData/", tiff_name_list[s], sep = "")
+
+sample_id <- as.numeric(gsub("p", "", gsub("_labeledcellData.tiff", "", tiff_name_list[s])))
+
+cat(paste0("Reading the tiff ", print(tiff_name_list[s])))
+
+# read tiff data using raster
+r <- raster(str_name)
+r
+
+
+p_sce <- mibi.sce[, mibi.sce$SampleID == sample_id]
+
+
+# matching the cell label in SingleCellExperiment with the raster position
+cell_label <- raster::values(r)
+all_group_info <- p_sce$cellTypes_group
+notInLabel <- unique(cell_label[!cell_label %in% p_sce$cellLabelInImage])
+new_values <- mapvalues((cell_label), from = notInLabel, to = rep("Background",
+                                                                  length(notInLabel)))
+new_values <- mapvalues((new_values), from = p_sce$cellLabelInImage, to = all_group_info)
+
+
+new_values_cellTypes <- mapvalues((cell_label), from = notInLabel, to = rep("Background",
+                                                                            length(notInLabel)))
+new_values_cellTypes <- mapvalues((new_values_cellTypes), from = p_sce$cellLabelInImage, to = p_sce$cellTypes)
+```
+
+
+```{r fig.height=8}
+
+ddf <- rasterToPoints(r)
+ddf <- data.frame(ddf)
+colnames(ddf) <- c("X", "Y", "value")
+ddf$cellType_group <- new_values
+ddf$cellType <- new_values_cellTypes
+g_cellGroup <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType_group))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_group_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "Cell Type")
+
+g_cellTypes <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "Cell Type")
+
+grid.arrange(g_cellGroup, g_cellTypes, ncol = 2)
+```
+
+
+```{r}
+# extract the location and identify the cell centroid
+coord_r <- rasterToPoints(r)
+center_r_x <- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+group <- center_r_x$Group.1
+center_r_x <- center_r_x$x
+center_r_y <- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+center_r <- data.frame(x = center_r_x, y = center_r_y, group = group)
+
+
+
+## maping the cell types to the raster
+r_cellType_group <- mapvalues((center_r$group), from = notInLabel, to = rep(0, length(notInLabel)))
+r_cellType_group <- mapvalues((r_cellType_group), from = p_sce$cellLabelInImage, to = all_group_info)
+
+center_r$cellTypes <- r_cellType_group
+
+r_cellType <- mapvalues((center_r$group), from = notInLabel, to = rep(0, length(notInLabel)))
+r_cellType <- mapvalues((r_cellType), from = p_sce$cellLabelInImage, to = p_sce$cellTypes)
+
+center_r$cellTypes2 <- r_cellType
+
+# filter the center info without cells 
+center_r <- center_r[center_r$cellTypes != "0", ]
+
+
+
+r_cellType_group <- mapvalues((center_r$group), 
+                              from = notInLabel, 
+                              to = rep(0, length(notInLabel)))
+
+exprsMat <- assay(p_sce, "mibi_exprs")
+exprsMat_map <- sapply(rownames(exprsMat), function(x) {
+  zero_one_scale(mapvalues((r_cellType_group), 
+                           from = p_sce$cellLabelInImage, 
+                           to = exprsMat[x, ]))
+  
+})
+```
+
+
+```{r}
+# create ppp object and extract spatial features
+cell_points <- ppp(x = center_r[, 1], y = center_r[, 2], check = FALSE,
+                   yrange = c(0, 2048), xrange = c(0, 2048),
+                   marks = as.factor(center_r$cellTypes))
+
+
+plot(density(split(cell_points), sigma = 20), ribbon = FALSE)
+
+idx <- center_r$cellTypes == "Tumour"
+cell_points_tumour <- ppp(x = center_r[idx, 1], y = center_r[idx, 2], check = FALSE,
+                          yrange = c(0, 2048), xrange = c(0, 2048))
+
+idx <- center_r$cellTypes == "Micro-environment"
+cell_points_immune <- ppp(x = center_r[idx, 1], y = center_r[idx, 2], check = FALSE,
+                          yrange = c(0, 2048), xrange = c(0, 2048))
+
+
+
+ann_tumour_k1 <- mean(nndist(cell_points_tumour, k = 1))
+ann_tumour_k3 <- mean(nndist(cell_points_tumour, k = 3))
+ann_tumour_k5 <- mean(nndist(cell_points_tumour, k = 5))
+ann_tumour_k10 <- mean(nndist(cell_points_tumour, k = 10))
+
+ann_immune_k1 <- mean(nndist(cell_points_immune, k = 1))
+ann_immune_k3 <- mean(nndist(cell_points_immune, k = 3))
+ann_immune_k5 <- mean(nndist(cell_points_immune, k = 5))
+ann_immune_k10 <- mean(nndist(cell_points_immune, k = 10))
+
+
+E_pcf_cross <- envelope(cell_points, pcfcross, nsim = 100, 
+                        correction = "Ripley", savefuns = T,
+                        global = TRUE,
+                        r = seq(0,250, 10))
+
+
+E_pcf_tumour <- envelope(cell_points[cell_points$marks == 'Tumour'], pcf, nsim = 100, 
+                         correction = "Ripley", savefuns = T,
+                         global = TRUE,
+                         r = seq(0,250, 10))
+
+E_pcf_immune <- envelope(cell_points[cell_points$marks == "Micro-environment"], pcf, nsim = 100, 
+                         correction = "Ripley", savefuns = T,
+                         global = TRUE,
+                         r = seq(0,250, 10))
+
+```
+
+
+Patial correlation function for tumour-tumour cells, immune-immune cells and tumour-immune cells
+```{r}
+par(mfrow = c(2, 2))
+plot(E_pcf_tumour)
+plot(E_pcf_immune)
+plot(E_pcf_cross)
+```
+
+
+```{r}
+pcf_results <- c(extract_pcf_results(E_pcf_cross, "cross"),
+                 extract_pcf_results(E_pcf_tumour, "tumour"),
+                 extract_pcf_results(E_pcf_immune, "immune"))
+
+library(SpatEntropy)
+shZ <- shannonX(marks(cell_points))
+
+#Leibovici’s entropy
+dmat <- pairdist(cell_points)
+dmat[lower.tri(dmat,diag = TRUE)] <- NA
+adjmat <- adj_mat(dmat, dd0 = 0, dd1 = 20)
+leib <- leibovici(marks(cell_points), adjmat, ordered = TRUE)
+
+leib_freq <- leib$freq.table$proportion
+names(leib_freq) <- paste("leib", leib$freq.table$couple, "freq", sep = "_")
+leib_entro <- leib$entropy
+names(leib_entro) <- "leib_entropy"
+
+intensity_res <- intensity(cell_points)
+names(intensity_res) <- paste("intensity", names(intensity_res))
+
+
+marks(cell_points) <- center_r$cellTypes2
+#Leibovici’s entropy
+dmat <- pairdist(cell_points)
+dmat[lower.tri(dmat,diag = TRUE)] <- NA
+adjmat <- adj_mat(dmat, dd0 = 0, dd1 = 20)
+leib <- leibovici(marks(cell_points), adjmat, ordered = TRUE)
+leib_entro2 <- leib$entropy
+names(leib_entro2) <- "leib_entropy_cellTypes"
+
+
+
+
+res_image <- c(intensity_res, shannon = shZ$shannon, leib_entro, leib_entro2, 
+               pcf_results,
+               ann_tumour_k1 = ann_tumour_k1, ann_tumour_k3 = ann_tumour_k3, 
+               ann_tumour_k5 = ann_tumour_k5, ann_tumour_k10 = ann_tumour_k10,
+               ann_immune_k1 = ann_immune_k1, ann_immune_k3 = ann_immune_k3, 
+               ann_immune_k5 = ann_immune_k5, ann_immune_k10 = ann_immune_k10)
+
+cat(paste0("Features extracted for", tiff_name_list[s]))
+round(res_image, 2)
+```
+
+
+## Jackson et al.
+
+The similar analysis for Jackson et al. Basel cohort
+
+```{r}
+pg$cluster_type2 <- pg$cluster_type
+pg$cluster_type2[pg$cluster_type2 %in% c("Endothelial", "Stromal", "Immune")] <- "Micro-environment"
+pg$cluster_type2[pg$cluster_type2 %in% c("Epithelial")] <- "Tumour"
+table(pg$cluster_type2)
+cellTypes_group_basel_color <- tableau_color_pal("Tableau 10")(length(unique(pg$cluster_type2)))
+cellTypes_group_basel_color <- c(cellTypes_group_basel_color, "black")
+names(cellTypes_group_basel_color) <- c(unique(pg$cluster_type2), "Background")
+```
+
+
+
+```{r}
+
+tiff_name_list <- list.files("../../sc-targeted-proteomics/data/Nature_cytof/OMEnMasks/Basel_Zuri_masks/", pattern = "Basel")
+map_names <- readRDS("../../sc-targeted-proteomics/output/basel_map_file_core_names.rds")
+
+
+filter_idx <- c(93, 106, 107, 238, 251, 370, 371)
+
+tiff_name_list <- tiff_name_list[-filter_idx]
+
+s <- 333
+str_name <- paste("../../sc-targeted-proteomics/data/Nature_cytof/OMEnMasks/Basel_Zuri_masks/", 
+                  tiff_name_list[s], sep = "")
+
+r <- raster(str_name)
+cell_label <- raster::values(r)
+
+ncells <- length(unique(cell_label)) - 1
+
+sample_id <- names(which(map_names[, 2] == tiff_name_list[s]))
+
+idx <- which(pg$core == sample_id)
+
+pg_sub <- pg[idx, ]
+sc_mat_subset <- sc_mat[idx, ]
+```
+
+
+```{r}
+all_group_info <- pg_sub$cluster_type2
+
+cell_label <- mapvalues(cell_label, 
+                        from = sort(unique(cell_label[cell_label != 0])),
+                        to = seq_len(length(unique(cell_label[cell_label != 0]))))
+values(r) <- cell_label
+
+new_values <- mapvalues(cell_label, from = 0, to = "Background")
+
+new_values <- mapvalues(new_values, from = seq_len(length(unique(cell_label[cell_label != 0]))), to = all_group_info)
+
+
+ddf <- rasterToPoints(r)
+ddf <- data.frame(ddf)
+colnames(ddf) <- c("X", "Y", "value")
+ddf$cellType <- new_values
+g_cellTypes <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_group_basel_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1) +
+  labs(fill = "Cell Type")
+
+
+
+new_values2 <- mapvalues(cell_label, from = 0, to = "Background")
+
+new_values2 <- mapvalues(new_values2, from = seq_len(length(unique(cell_label[cell_label != 0]))), to = pg_sub$cluster_name)
+
+
+ddf$cellType2 <- new_values2
+g_cellTypes2 <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType2))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_basel_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1) +
+  labs(fill = "Cell Type")
+
+
+grid.arrange(g_cellTypes, g_cellTypes2, nrow = 2)
+```
+
+
+```{r}
+coord_r <- rasterToPoints(r)
+center_r_x <- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+group <- center_r_x$Group.1
+center_r_x <- center_r_x$x
+center_r_y <- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+
+center_r <- data.frame(x = center_r_x, y = center_r_y, group = group)
+
+
+center_r <- center_r[center_r$group != 0, ]
+
+center_r$cellTypes <- pg_sub$cluster_type2
+
+center_r$cellTypes2 <- pg_sub$cluster_type
+
+
+library(sf)
+library(maptools)
+
+
+cell_points <- ppp(x = center_r[, 1], y = center_r[, 2], check = FALSE,
+                   yrange = c(0, round(max(coord_r[, 2]))), 
+                   xrange = c(0, round(max(coord_r[, 1]))),
+                   marks = as.factor(center_r$cellTypes))
+
+
+
+plot(density(split(cell_points), sigma = 20), ribbon = FALSE)
+
+idx <- center_r$cellTypes == "Tumour"
+cell_points_tumour <- ppp(x = center_r[idx, 1], y = center_r[idx, 2], check = FALSE,
+                          yrange = c(0, round(max(coord_r[, 2]))), 
+                          xrange = c(0, round(max(coord_r[, 1]))))
+
+idx <- center_r$cellTypes == "Micro-environment"
+cell_points_immune <- ppp(x = center_r[idx, 1], y = center_r[idx, 2], check = FALSE,
+                          yrange = c(0, round(max(coord_r[, 2]))), 
+                          xrange = c(0, round(max(coord_r[, 1]))))
+
+ann_tumour_k1 <- mean(nndist(cell_points_tumour, k = 1))
+ann_tumour_k3 <- mean(nndist(cell_points_tumour, k = 3))
+ann_tumour_k5 <- mean(nndist(cell_points_tumour, k = 5))
+ann_tumour_k10 <- mean(nndist(cell_points_tumour, k = 10))
+
+ann_immune_k1 <- mean(nndist(cell_points_immune, k = 1))
+ann_immune_k3 <- mean(nndist(cell_points_immune, k = 3))
+ann_immune_k5 <- mean(nndist(cell_points_immune, k = 5))
+ann_immune_k10 <- mean(nndist(cell_points_immune, k = 10))
+
+
+E_pcf_cross <- envelope(cell_points, pcfcross, nsim = 100, 
+                        correction = "Ripley", savefuns = T,
+                        global = TRUE,
+                        r = seq(0,250, 10))
+
+
+E_pcf_tumour <- envelope(cell_points[cell_points$marks=='Tumour'], pcf, nsim = 100, 
+                         correction = "Ripley", savefuns = T,
+                         global = TRUE,
+                         r = seq(0,250, 10))
+
+E_pcf_immune <-envelope(cell_points[cell_points$marks=="Micro-environment"], pcf, nsim = 100, 
+                        correction = "Ripley", savefuns = T,
+                        global = TRUE,
+                        r = seq(0,250, 10))
+
+
+par(mfrow = c(2, 2))
+plot(E_pcf_tumour)
+plot(E_pcf_immune)
+plot(E_pcf_cross)
+
+
+par(mfrow = c(1, 1))
+
+
+pcf_results <- c(extract_pcf_results(E_pcf_cross, "cross"),
+                 extract_pcf_results(E_pcf_tumour, "tumour"),
+                 extract_pcf_results(E_pcf_immune, "immune"))
+
+library(SpatEntropy)
+shZ <- shannonX(marks(cell_points))
+
+#Leibovici’s entropy
+dmat <- pairdist(cell_points)
+dmat[lower.tri(dmat,diag=TRUE)] <- NA
+adjmat <- adj_mat(dmat, dd0 = 0, dd1 = 20)
+leib <- leibovici(marks(cell_points), adjmat, ordered=T)
+
+leib_freq <- leib$freq.table$proportion
+names(leib_freq) <- paste("leib", leib$freq.table$couple, "freq", sep = "_")
+leib_entro <- leib$entropy
+names(leib_entro) <- "leib_entropy"
+
+intensity_res <- intensity(cell_points)
+if (length(intensity_res) < 2) {
+  tab <- table(marks(cell_points))
+  max_name <- names(tab)[which.max(tab)]
+  min_name <- names(tab)[which.min(tab)]
+  intensity_res <- c(intensity_res, 0)
+  names(intensity_res) <- c(paste("intensity", max_name),
+                            paste("intensity", min_name))
+  
+} else {
+  names(intensity_res) <- paste("intensity", names(intensity_res))
+}
+
+
+
+marks(cell_points) <- center_r$cellTypes
+#Leibovici’s entropy
+dmat <- pairdist(cell_points)
+dmat[lower.tri(dmat,diag=TRUE)] <- NA
+adjmat <- adj_mat(dmat, dd0 = 0, dd1 = 20)
+leib <- leibovici(marks(cell_points), adjmat, ordered=T)
+leib_entro2 <- leib$entropy
+names(leib_entro2) <- "leib_entropy_cellTypes"
+
+
+
+
+res_image <- c(intensity_res, shannon = shZ$shannon, leib_entro, leib_entro2, 
+               pcf_results,
+               ann_tumour_k1 = ann_tumour_k1, ann_tumour_k3 = ann_tumour_k3, 
+               ann_tumour_k5 = ann_tumour_k5, ann_tumour_k10 = ann_tumour_k10,
+               ann_immune_k1 = ann_immune_k1, ann_immune_k3 = ann_immune_k3, 
+               ann_immune_k5 = ann_immune_k5, ann_immune_k10 = ann_immune_k10)
+res_image
+
+```
+

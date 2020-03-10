@@ -1,0 +1,11 @@
+name: "BIRS-analysis"
+navbar:
+  title: "BIRS analysis"
+  left:
+    - text: "Overview"
+      href: index.html
+    - text: "Preliminary Analysis"
+      href: preliminary.html
+output:
+  html_document:
+    theme: cosmo
