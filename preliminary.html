@@ -408,8 +408,8 @@ mibi.sce</code></pre>
 ## rownames(49): C Na ... Ta Au
 ## rowData names(4): channel_name is_protein hgnc_symbol wagner_overlap
 ## colnames: NULL
-## colData names(36): SampleID cellLabelInImage ... Survival_days_capped_2016.1.1
-##   Censored
+## colData names(36): SampleID cellLabelInImage ...
+##   Survival_days_capped_2016.1.1 Censored
 ## reducedDimNames(0):
 ## spikeNames(0):
 ## altExpNames(0):</code></pre>
@@ -417,12 +417,12 @@ mibi.sce</code></pre>
 <pre><code>## Patients information</code></pre>
 <pre class="r"><code>table(mibi.sce$SampleID)</code></pre>
 <pre><code>## 
-##    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16   17   18 
-## 5167 3028 6315 6643 5406 5998 3410 3136 6139 4580 5112 6995 7665 6270 3315 8212 7071 5539 
-##   19   20   21   22   23   24   25   26   27   28   29   31   32   33   34   35   36   37 
-## 4400 5103 5423 3072 4490 4613 2658 5119 4332 6061 4819 3415 5158 2046 2856 7716 2939 6280 
-##   38   39   40   41   42   43   44 
-## 4330 4030 4285 4532 1380 1381 1217</code></pre>
+##    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15 
+## 5167 3028 6315 6643 5406 5998 3410 3136 6139 4580 5112 6995 7665 6270 3315 
+##   16   17   18   19   20   21   22   23   24   25   26   27   28   29   31 
+## 8212 7071 5539 4400 5103 5423 3072 4490 4613 2658 5119 4332 6061 4819 3415 
+##   32   33   34   35   36   37   38   39   40   41   42   43   44 
+## 5158 2046 2856 7716 2939 6280 4330 4030 4285 4532 1380 1381 1217</code></pre>
 <pre class="r"><code>cat(&quot;Cell types informaton&quot;)</code></pre>
 <pre><code>## Cell types informaton</code></pre>
 <pre class="r"><code># table(mibi.sce$tumor_group)
@@ -557,14 +557,16 @@ g2</code></pre>
 <pre class="r"><code># intersect(colnames(sc_mat), rownames(mibi.sce))
 # colnames(sc_mat)[!colnames(sc_mat) %in% rownames(mibi.sce)]
 rownames(mibi.sce)[!rownames(mibi.sce) %in% colnames(sc_mat)]</code></pre>
-<pre><code>##  [1] &quot;C&quot;            &quot;Na&quot;           &quot;Si&quot;           &quot;P&quot;            &quot;Ca&quot;          
-##  [6] &quot;Fe&quot;           &quot;dsDNA&quot;        &quot;Background&quot;   &quot;B7H3&quot;         &quot;FoxP3&quot;       
-## [11] &quot;Lag3&quot;         &quot;CD4&quot;          &quot;CD16&quot;         &quot;CD56&quot;         &quot;OX40&quot;        
-## [16] &quot;PD1&quot;          &quot;CD31&quot;         &quot;PD-L1&quot;        &quot;CD209&quot;        &quot;CD11c&quot;       
-## [21] &quot;CD138&quot;        &quot;CD163&quot;        &quot;CSF-1R&quot;       &quot;CD8&quot;          &quot;IDO&quot;         
-## [26] &quot;Keratin17&quot;    &quot;CD63&quot;         &quot;CD45RO&quot;       &quot;Beta catenin&quot; &quot;HLA-DR&quot;      
-## [31] &quot;CD11b&quot;        &quot;H3K9ac&quot;       &quot;Pan-Keratin&quot;  &quot;phospho-S6&quot;   &quot;MPO&quot;         
-## [36] &quot;Keratin6&quot;     &quot;HLA_Class_1&quot;  &quot;Ta&quot;           &quot;Au&quot;</code></pre>
+<pre><code>##  [1] &quot;C&quot;            &quot;Na&quot;           &quot;Si&quot;           &quot;P&quot;           
+##  [5] &quot;Ca&quot;           &quot;Fe&quot;           &quot;dsDNA&quot;        &quot;Background&quot;  
+##  [9] &quot;B7H3&quot;         &quot;FoxP3&quot;        &quot;Lag3&quot;         &quot;CD4&quot;         
+## [13] &quot;CD16&quot;         &quot;CD56&quot;         &quot;OX40&quot;         &quot;PD1&quot;         
+## [17] &quot;CD31&quot;         &quot;PD-L1&quot;        &quot;CD209&quot;        &quot;CD11c&quot;       
+## [21] &quot;CD138&quot;        &quot;CD163&quot;        &quot;CSF-1R&quot;       &quot;CD8&quot;         
+## [25] &quot;IDO&quot;          &quot;Keratin17&quot;    &quot;CD63&quot;         &quot;CD45RO&quot;      
+## [29] &quot;Beta catenin&quot; &quot;HLA-DR&quot;       &quot;CD11b&quot;        &quot;H3K9ac&quot;      
+## [33] &quot;Pan-Keratin&quot;  &quot;phospho-S6&quot;   &quot;MPO&quot;          &quot;Keratin6&quot;    
+## [37] &quot;HLA_Class_1&quot;  &quot;Ta&quot;           &quot;Au&quot;</code></pre>
 <pre class="r"><code>rownames(mibi.sce)[rownames(mibi.sce) == &quot;phospho-S6&quot;] &lt;- &quot;pS6&quot;
 rownames(mibi.sce)[rownames(mibi.sce) == &quot;CD31&quot;] &lt;- &quot;vWF&quot;
 rownames(mibi.sce)[rownames(mibi.sce) == &quot;Pan-Keratin&quot;] &lt;- &quot;panCK&quot;
@@ -572,8 +574,9 @@ common_anti &lt;- intersect(colnames(sc_mat), rownames(mibi.sce))
 cat(&quot;Common protein between two datasets&quot;)</code></pre>
 <pre><code>## Common protein between two datasets</code></pre>
 <pre class="r"><code>common_anti</code></pre>
-<pre><code>##  [1] &quot;EGFR&quot;     &quot;Ki67&quot;     &quot;SMA&quot;      &quot;Vimentin&quot; &quot;p53&quot;      &quot;panCK&quot;    &quot;CD20&quot;    
-##  [8] &quot;vWF&quot;      &quot;H3K27me3&quot; &quot;CD45&quot;     &quot;CD68&quot;     &quot;CD3&quot;      &quot;pS6&quot;</code></pre>
+<pre><code>##  [1] &quot;EGFR&quot;     &quot;Ki67&quot;     &quot;SMA&quot;      &quot;Vimentin&quot; &quot;p53&quot;      &quot;panCK&quot;   
+##  [7] &quot;CD20&quot;     &quot;vWF&quot;      &quot;H3K27me3&quot; &quot;CD45&quot;     &quot;CD68&quot;     &quot;CD3&quot;     
+## [13] &quot;pS6&quot;</code></pre>
 <pre class="r"><code>length(common_anti) </code></pre>
 <pre><code>## [1] 13</code></pre>
 <pre class="r"><code>mibi_exprs &lt;- assay(mibi.sce, &quot;mibi_exprs&quot;)
@@ -636,20 +639,26 @@ g2</code></pre>
 tiff_name_list &lt;- tiff_name_list[-24] #filter p30
 
 tiff_name_list</code></pre>
-<pre><code>##  [1] &quot;p1_labeledcellData.tiff&quot;  &quot;p10_labeledcellData.tiff&quot; &quot;p11_labeledcellData.tiff&quot;
-##  [4] &quot;p12_labeledcellData.tiff&quot; &quot;p13_labeledcellData.tiff&quot; &quot;p14_labeledcellData.tiff&quot;
-##  [7] &quot;p15_labeledcellData.tiff&quot; &quot;p16_labeledcellData.tiff&quot; &quot;p17_labeledcellData.tiff&quot;
-## [10] &quot;p18_labeledcellData.tiff&quot; &quot;p19_labeledcellData.tiff&quot; &quot;p2_labeledcellData.tiff&quot; 
-## [13] &quot;p20_labeledcellData.tiff&quot; &quot;p21_labeledcellData.tiff&quot; &quot;p22_labeledcellData.tiff&quot;
-## [16] &quot;p23_labeledcellData.tiff&quot; &quot;p24_labeledcellData.tiff&quot; &quot;p25_labeledcellData.tiff&quot;
-## [19] &quot;p26_labeledcellData.tiff&quot; &quot;p27_labeledcellData.tiff&quot; &quot;p28_labeledcellData.tiff&quot;
-## [22] &quot;p29_labeledcellData.tiff&quot; &quot;p3_labeledcellData.tiff&quot;  &quot;p31_labeledcellData.tiff&quot;
-## [25] &quot;p32_labeledcellData.tiff&quot; &quot;p33_labeledcellData.tiff&quot; &quot;p34_labeledcellData.tiff&quot;
-## [28] &quot;p35_labeledcellData.tiff&quot; &quot;p36_labeledcellData.tiff&quot; &quot;p37_labeledcellData.tiff&quot;
-## [31] &quot;p38_labeledcellData.tiff&quot; &quot;p39_labeledcellData.tiff&quot; &quot;p4_labeledcellData.tiff&quot; 
-## [34] &quot;p40_labeledcellData.tiff&quot; &quot;p41_labeledcellData.tiff&quot; &quot;p5_labeledcellData.tiff&quot; 
-## [37] &quot;p6_labeledcellData.tiff&quot;  &quot;p7_labeledcellData.tiff&quot;  &quot;p8_labeledcellData.tiff&quot; 
-## [40] &quot;p9_labeledcellData.tiff&quot;</code></pre>
+<pre><code>##  [1] &quot;p1_labeledcellData.tiff&quot;  &quot;p10_labeledcellData.tiff&quot;
+##  [3] &quot;p11_labeledcellData.tiff&quot; &quot;p12_labeledcellData.tiff&quot;
+##  [5] &quot;p13_labeledcellData.tiff&quot; &quot;p14_labeledcellData.tiff&quot;
+##  [7] &quot;p15_labeledcellData.tiff&quot; &quot;p16_labeledcellData.tiff&quot;
+##  [9] &quot;p17_labeledcellData.tiff&quot; &quot;p18_labeledcellData.tiff&quot;
+## [11] &quot;p19_labeledcellData.tiff&quot; &quot;p2_labeledcellData.tiff&quot; 
+## [13] &quot;p20_labeledcellData.tiff&quot; &quot;p21_labeledcellData.tiff&quot;
+## [15] &quot;p22_labeledcellData.tiff&quot; &quot;p23_labeledcellData.tiff&quot;
+## [17] &quot;p24_labeledcellData.tiff&quot; &quot;p25_labeledcellData.tiff&quot;
+## [19] &quot;p26_labeledcellData.tiff&quot; &quot;p27_labeledcellData.tiff&quot;
+## [21] &quot;p28_labeledcellData.tiff&quot; &quot;p29_labeledcellData.tiff&quot;
+## [23] &quot;p3_labeledcellData.tiff&quot;  &quot;p31_labeledcellData.tiff&quot;
+## [25] &quot;p32_labeledcellData.tiff&quot; &quot;p33_labeledcellData.tiff&quot;
+## [27] &quot;p34_labeledcellData.tiff&quot; &quot;p35_labeledcellData.tiff&quot;
+## [29] &quot;p36_labeledcellData.tiff&quot; &quot;p37_labeledcellData.tiff&quot;
+## [31] &quot;p38_labeledcellData.tiff&quot; &quot;p39_labeledcellData.tiff&quot;
+## [33] &quot;p4_labeledcellData.tiff&quot;  &quot;p40_labeledcellData.tiff&quot;
+## [35] &quot;p41_labeledcellData.tiff&quot; &quot;p5_labeledcellData.tiff&quot; 
+## [37] &quot;p6_labeledcellData.tiff&quot;  &quot;p7_labeledcellData.tiff&quot; 
+## [39] &quot;p8_labeledcellData.tiff&quot;  &quot;p9_labeledcellData.tiff&quot;</code></pre>
 <p>Here we are extracting the spatial pattern features from <code>p1_labeledcellData.tiff</code>.</p>
 <pre class="r"><code>s &lt;- 1
 
@@ -780,9 +789,9 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                         global = TRUE,
                         r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-## 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-## 93, 94, 95, 96, 97, 98, 99,  100.
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+## 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+## 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,  100.
 ## 
 ## Done.</code></pre>
 <pre class="r"><code>E_pcf_tumour &lt;- envelope(cell_points[cell_points$marks == &#39;Tumour&#39;], pcf, nsim = 100, 
@@ -790,9 +799,9 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                          global = TRUE,
                          r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-## 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-## 93, 94, 95, 96, 97, 98, 99,  100.
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+## 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+## 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,  100.
 ## 
 ## Done.</code></pre>
 <pre class="r"><code>E_pcf_immune &lt;- envelope(cell_points[cell_points$marks == &quot;Micro-environment&quot;], pcf, nsim = 100, 
@@ -800,9 +809,9 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                          global = TRUE,
                          r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-## 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-## 93, 94, 95, 96, 97, 98, 99,  100.
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+## 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+## 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,  100.
 ## 
 ## Done.</code></pre>
 <p>Patial correlation function for tumour-tumour cells, immune-immune cells and tumour-immune cells</p>
@@ -855,38 +864,52 @@ res_image &lt;- c(intensity_res, shannon = shZ$shannon, leib_entro, leib_entro2,
 cat(paste0(&quot;Features extracted for&quot;, tiff_name_list[s]))</code></pre>
 <pre><code>## Features extracted forp1_labeledcellData.tiff</code></pre>
 <pre class="r"><code>round(res_image, 2)</code></pre>
-<pre><code>## intensity Micro-environment            intensity Tumour                     shannon 
-##                        0.00                        0.00                        0.69 
-##                leib_entropy      leib_entropy_cellTypes               cross_max_pcf 
-##                        1.00                        3.11                        0.83 
-##                 cross_max_r               cross_max_sig               cross_r50_pcf 
-##                      240.00                       -1.00                        0.75 
-##           cross_r50_pcf_sig              cross_r100_pcf          cross_r100_pcf_sig 
-##                       -1.00                        0.78                       -1.00 
-##              cross_r150_pcf          cross_r150_pcf_sig              cross_r200_pcf 
-##                        0.79                       -1.00                        0.81 
-##          cross_r200_pcf_sig              tumour_max_pcf                tumour_max_r 
-##                       -1.00                        1.24                       30.00 
-##              tumour_max_sig              tumour_r50_pcf          tumour_r50_pcf_sig 
-##                        1.00                        1.10                        0.00 
-##             tumour_r100_pcf         tumour_r100_pcf_sig             tumour_r150_pcf 
-##                        1.09                        0.00                        1.08 
-##         tumour_r150_pcf_sig             tumour_r200_pcf         tumour_r200_pcf_sig 
-##                        0.00                        1.07                        0.00 
-##              immune_max_pcf                immune_max_r              immune_max_sig 
-##                        3.14                       20.00                        1.00 
-##              immune_r50_pcf          immune_r50_pcf_sig             immune_r100_pcf 
-##                        2.24                        1.00                        2.08 
-##         immune_r100_pcf_sig             immune_r150_pcf         immune_r150_pcf_sig 
-##                        1.00                        1.98                        1.00 
-##             immune_r200_pcf         immune_r200_pcf_sig               ann_tumour_k1 
-##                        1.88                        1.00                       25.00 
-##               ann_tumour_k3               ann_tumour_k5              ann_tumour_k10 
-##                       38.05                       49.00                       69.67 
-##               ann_immune_k1               ann_immune_k3               ann_immune_k5 
-##                       20.25                       32.76                       43.27 
-##              ann_immune_k10 
-##                       62.85</code></pre>
+<pre><code>## intensity Micro-environment            intensity Tumour 
+##                        0.00                        0.00 
+##                     shannon                leib_entropy 
+##                        0.69                        1.00 
+##      leib_entropy_cellTypes               cross_max_pcf 
+##                        3.11                        0.83 
+##                 cross_max_r               cross_max_sig 
+##                      240.00                       -1.00 
+##               cross_r50_pcf           cross_r50_pcf_sig 
+##                        0.75                       -1.00 
+##              cross_r100_pcf          cross_r100_pcf_sig 
+##                        0.78                       -1.00 
+##              cross_r150_pcf          cross_r150_pcf_sig 
+##                        0.79                       -1.00 
+##              cross_r200_pcf          cross_r200_pcf_sig 
+##                        0.81                       -1.00 
+##              tumour_max_pcf                tumour_max_r 
+##                        1.24                       30.00 
+##              tumour_max_sig              tumour_r50_pcf 
+##                        1.00                        1.10 
+##          tumour_r50_pcf_sig             tumour_r100_pcf 
+##                        0.00                        1.09 
+##         tumour_r100_pcf_sig             tumour_r150_pcf 
+##                        0.00                        1.08 
+##         tumour_r150_pcf_sig             tumour_r200_pcf 
+##                        0.00                        1.07 
+##         tumour_r200_pcf_sig              immune_max_pcf 
+##                        0.00                        3.14 
+##                immune_max_r              immune_max_sig 
+##                       20.00                        1.00 
+##              immune_r50_pcf          immune_r50_pcf_sig 
+##                        2.24                        1.00 
+##             immune_r100_pcf         immune_r100_pcf_sig 
+##                        2.08                        1.00 
+##             immune_r150_pcf         immune_r150_pcf_sig 
+##                        1.98                        1.00 
+##             immune_r200_pcf         immune_r200_pcf_sig 
+##                        1.88                        1.00 
+##               ann_tumour_k1               ann_tumour_k3 
+##                       25.00                       38.05 
+##               ann_tumour_k5              ann_tumour_k10 
+##                       49.00                       69.67 
+##               ann_immune_k1               ann_immune_k3 
+##                       20.25                       32.76 
+##               ann_immune_k5              ann_immune_k10 
+##                       43.27                       62.85</code></pre>
 </div>
 <div id="jackson-et-al.-1" class="section level2">
 <h2>Jackson et al.</h2>
@@ -1022,9 +1045,9 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                         global = TRUE,
                         r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-## 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-## 93, 94, 95, 96, 97, 98, 99,  100.
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+## 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+## 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,  100.
 ## 
 ## Done.</code></pre>
 <pre class="r"><code>E_pcf_tumour &lt;- envelope(cell_points[cell_points$marks==&#39;Tumour&#39;], pcf, nsim = 100, 
@@ -1032,26 +1055,31 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                          global = TRUE,
                          r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3,  [etd 5:44] 4,  [etd 4:48] 5,
-##  [etd 4:16] 6,  [etd 4:01] 7,  [etd 3:47] 8,  [etd 3:38] 9,  [etd 3:30] 10,
-##  [etd 3:22] 11,  [etd 3:59] 12,  [etd 3:49] 13,  [etd 3:40] 14,  [etd 3:31] 15,
-##  [etd 3:26] 16,  [etd 3:20] 17,  [etd 3:14] 18,  [etd 3:10] 19,  [etd 3:06] 20,
-##  [etd 3:03] 21,  [etd 2:58] 22,  [etd 2:55] 23,  [etd 2:52] 24,  [etd 2:49] 25,
-##  [etd 2:45] 26,  [etd 2:47] 27,  [etd 2:44] 28,  [etd 2:41] 29,  [etd 2:38] 30,
-##  [etd 2:35] 31,  [etd 2:32] 32,  [etd 2:30] 33,  [etd 2:27] 34,  [etd 2:24] 35,
-##  [etd 2:21] 36,  [etd 2:19] 37,  [etd 2:16] 38,  [etd 2:13] 39,  [etd 2:11] 40,
-##  [etd 2:10] 41,  [etd 2:08] 42,  [etd 2:05] 43,  [etd 2:02] 44,  [etd 1:59] 45,
-##  [etd 1:57] 46,  [etd 1:54] 47,  [etd 1:52] 48,  [etd 1:53] 49,  [etd 1:51] 50,
-##  [etd 1:48] 51,  [etd 1:46] 52,  [etd 1:43] 53,  [etd 1:41] 54,  [etd 1:39] 55,
-##  [etd 1:36] 56,  [etd 1:37] 57,  [etd 1:35] 58,  [etd 1:33] 59,  [etd 1:30] 60,
-##  [etd 1:28] 61,  [etd 1:25] 62,  [etd 1:23] 63,  [etd 1:21] 64,  [etd 1:18] 65,
-##  [etd 1:16] 66,  [etd 1:13] 67,  [etd 1:11] 68,  [etd 1:09] 69,  [etd 1:07] 70,
-##  [etd 1:04] 71,  [etd 1:03] 72,  [etd 1:00] 73,  [etd 58 sec] 74,  [etd 56 sec] 75,
-##  [etd 54 sec] 76,  [etd 51 sec] 77,  [etd 49 sec] 78,  [etd 47 sec] 79,  [etd 45 sec] 80,
-##  [etd 43 sec] 81,  [etd 40 sec] 82,  [etd 38 sec] 83,  [etd 36 sec] 84,  [etd 34 sec] 85,
-##  [etd 32 sec] 86,  [etd 30 sec] 87,  [etd 28 sec] 88,  [etd 25 sec] 89,  [etd 23 sec] 90,
-##  [etd 21 sec] 91,  [etd 19 sec] 92,  [etd 17 sec] 93,  [etd 15 sec] 94,  [etd 13 sec] 95,
-##  [etd 11 sec] 96,  [etd 9 sec] 97,  [etd 6 sec] 98,  [etd 4 sec] 99,  [etd 2 sec]  100.
+## 1, 2, 3,  [etd 3:17] 4,
+##  [etd 2:56] 5,  [etd 3:31] 6,  [etd 3:16] 7,  [etd 3:04] 8,
+##  [etd 2:55] 9,  [etd 2:53] 10,  [etd 2:44] 11,  [etd 2:40] 12,
+##  [etd 2:39] 13,  [etd 2:34] 14,  [etd 2:29] 15,  [etd 2:29] 16,
+##  [etd 2:26] 17,  [etd 2:22] 18,  [etd 2:21] 19,  [etd 2:18] 20,
+##  [etd 2:18] 21,  [etd 2:20] 22,  [etd 2:17] 23,  [etd 2:15] 24,
+##  [etd 2:14] 25,  [etd 2:11] 26,  [etd 2:09] 27,  [etd 2:07] 28,
+##  [etd 2:05] 29,  [etd 2:05] 30,  [etd 2:03] 31,  [etd 2:02] 32,
+##  [etd 2:08] 33,  [etd 2:07] 34,  [etd 2:05] 35,  [etd 2:05] 36,
+##  [etd 2:04] 37,  [etd 2:03] 38,  [etd 2:02] 39,  [etd 2:02] 40,
+##  [etd 2:00] 41,  [etd 1:59] 42,  [etd 1:57] 43,  [etd 1:54] 44,
+##  [etd 1:52] 45,  [etd 1:50] 46,  [etd 1:47] 47,  [etd 1:45] 48,
+##  [etd 1:43] 49,  [etd 1:41] 50,  [etd 1:39] 51,  [etd 1:38] 52,
+##  [etd 1:36] 53,  [etd 1:34] 54,  [etd 1:32] 55,  [etd 1:30] 56,
+##  [etd 1:27] 57,  [etd 1:25] 58,  [etd 1:23] 59,  [etd 1:21] 60,
+##  [etd 1:19] 61,  [etd 1:17] 62,  [etd 1:14] 63,  [etd 1:12] 64,
+##  [etd 1:10] 65,  [etd 1:08] 66,  [etd 1:06] 67,  [etd 1:04] 68,
+##  [etd 1:02] 69,  [etd 1:00] 70,  [etd 58 sec] 71,  [etd 56 sec] 72,
+##  [etd 54 sec] 73,  [etd 52 sec] 74,  [etd 50 sec] 75,  [etd 48 sec] 76,
+##  [etd 46 sec] 77,  [etd 45 sec] 78,  [etd 43 sec] 79,  [etd 41 sec] 80,
+##  [etd 39 sec] 81,  [etd 37 sec] 82,  [etd 35 sec] 83,  [etd 33 sec] 84,
+##  [etd 31 sec] 85,  [etd 29 sec] 86,  [etd 27 sec] 87,  [etd 25 sec] 88,
+##  [etd 23 sec] 89,  [etd 21 sec] 90,  [etd 19 sec] 91,  [etd 17 sec] 92,
+##  [etd 15 sec] 93,  [etd 13 sec] 94,  [etd 11 sec] 95,  [etd 10 sec] 96,
+##  [etd 8 sec] 97,  [etd 6 sec] 98,  [etd 4 sec] 99,  [etd 2 sec]  100.
 ## 
 ## Done.</code></pre>
 <pre class="r"><code>E_pcf_immune &lt;-envelope(cell_points[cell_points$marks==&quot;Micro-environment&quot;], pcf, nsim = 100, 
@@ -1059,9 +1087,9 @@ E_pcf_cross &lt;- envelope(cell_points, pcfcross, nsim = 100,
                         global = TRUE,
                         r = seq(0,250, 10))</code></pre>
 <pre><code>## Generating 100 simulations of CSR  ...
-## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46,
-## 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92,
-## 93, 94, 95, 96, 97, 98, 99,  100.
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+## 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78,
+## 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99,  100.
 ## 
 ## Done.</code></pre>
 <pre class="r"><code>par(mfrow = c(2, 2))
@@ -1124,38 +1152,52 @@ res_image &lt;- c(intensity_res, shannon = shZ$shannon, leib_entro, leib_entro2,
                ann_immune_k1 = ann_immune_k1, ann_immune_k3 = ann_immune_k3, 
                ann_immune_k5 = ann_immune_k5, ann_immune_k10 = ann_immune_k10)
 res_image</code></pre>
-<pre><code>## intensity Micro-environment            intensity Tumour                     shannon 
-##                 0.001849978                 0.003396445                 0.649051678 
-##                leib_entropy      leib_entropy_cellTypes               cross_max_pcf 
-##                 1.232231007                 1.232231007                 1.034112573 
-##                 cross_max_r               cross_max_sig               cross_r50_pcf 
-##                30.000000000                 0.000000000                 0.993957220 
-##           cross_r50_pcf_sig              cross_r100_pcf          cross_r100_pcf_sig 
-##                 0.000000000                 0.986920400                 0.000000000 
-##              cross_r150_pcf          cross_r150_pcf_sig              cross_r200_pcf 
-##                 0.978625306                 0.000000000                 0.989103348 
-##          cross_r200_pcf_sig              tumour_max_pcf                tumour_max_r 
-##                 0.000000000                 1.818801151                10.000000000 
-##              tumour_max_sig              tumour_r50_pcf          tumour_r50_pcf_sig 
-##                 1.000000000                 1.084964263                 0.000000000 
-##             tumour_r100_pcf         tumour_r100_pcf_sig             tumour_r150_pcf 
-##                 1.037777820                 0.000000000                 1.030419677 
-##         tumour_r150_pcf_sig             tumour_r200_pcf         tumour_r200_pcf_sig 
-##                 0.000000000                 1.047571663                 0.000000000 
-##              immune_max_pcf                immune_max_r              immune_max_sig 
-##                 1.516597988                10.000000000                 1.000000000 
-##              immune_r50_pcf          immune_r50_pcf_sig             immune_r100_pcf 
-##                 1.025545606                 0.000000000                 1.008101910 
-##         immune_r100_pcf_sig             immune_r150_pcf         immune_r150_pcf_sig 
-##                 0.000000000                 1.014198004                 0.000000000 
-##             immune_r200_pcf         immune_r200_pcf_sig               ann_tumour_k1 
-##                 0.979781727                 0.000000000                10.366407798 
-##               ann_tumour_k3               ann_tumour_k5              ann_tumour_k10 
-##                15.495466484                20.524819644                29.795848969 
-##               ann_immune_k1               ann_immune_k3               ann_immune_k5 
-##                11.964737956                21.791167028                29.106061648 
-##              ann_immune_k10 
-##                43.091147952</code></pre>
+<pre><code>## intensity Micro-environment            intensity Tumour 
+##                 0.001849978                 0.003396445 
+##                     shannon                leib_entropy 
+##                 0.649051678                 1.232231007 
+##      leib_entropy_cellTypes               cross_max_pcf 
+##                 1.232231007                 1.034112573 
+##                 cross_max_r               cross_max_sig 
+##                30.000000000                 0.000000000 
+##               cross_r50_pcf           cross_r50_pcf_sig 
+##                 0.993957220                 0.000000000 
+##              cross_r100_pcf          cross_r100_pcf_sig 
+##                 0.986920400                 0.000000000 
+##              cross_r150_pcf          cross_r150_pcf_sig 
+##                 0.978625306                 0.000000000 
+##              cross_r200_pcf          cross_r200_pcf_sig 
+##                 0.989103348                 0.000000000 
+##              tumour_max_pcf                tumour_max_r 
+##                 1.818801151                10.000000000 
+##              tumour_max_sig              tumour_r50_pcf 
+##                 1.000000000                 1.084964263 
+##          tumour_r50_pcf_sig             tumour_r100_pcf 
+##                 0.000000000                 1.037777820 
+##         tumour_r100_pcf_sig             tumour_r150_pcf 
+##                 0.000000000                 1.030419677 
+##         tumour_r150_pcf_sig             tumour_r200_pcf 
+##                 0.000000000                 1.047571663 
+##         tumour_r200_pcf_sig              immune_max_pcf 
+##                 0.000000000                 1.516597988 
+##                immune_max_r              immune_max_sig 
+##                10.000000000                 1.000000000 
+##              immune_r50_pcf          immune_r50_pcf_sig 
+##                 1.025545606                 0.000000000 
+##             immune_r100_pcf         immune_r100_pcf_sig 
+##                 1.008101910                 0.000000000 
+##             immune_r150_pcf         immune_r150_pcf_sig 
+##                 1.014198004                 0.000000000 
+##             immune_r200_pcf         immune_r200_pcf_sig 
+##                 0.979781727                 0.000000000 
+##               ann_tumour_k1               ann_tumour_k3 
+##                10.366407798                15.495466484 
+##               ann_tumour_k5              ann_tumour_k10 
+##                20.524819644                29.795848969 
+##               ann_immune_k1               ann_immune_k3 
+##                11.964737956                21.791167028 
+##               ann_immune_k5              ann_immune_k10 
+##                29.106061648                43.091147952</code></pre>
 </div>
 </div>
 

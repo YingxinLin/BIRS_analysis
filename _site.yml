@@ -1,4 +1,5 @@
 name: "BIRS-analysis"
+output_dir: "."
 navbar:
   title: "BIRS analysis"
   left:
