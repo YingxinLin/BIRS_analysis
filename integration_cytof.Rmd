@@ -1,0 +1,375 @@
+---
+title: "Integration with CyTOF"
+author: "Yingxin Lin"
+output:
+  html_document:
+    code_folding: hide
+    fig_height: 12
+    fig_width: 12
+    toc: yes
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      cache = TRUE, 
+                      cache.lazy = TRUE)
+```
+
+
+# Data and package
+
+```{r}
+library(raster)
+library(SingleCellExperiment)
+library(scater)
+library(plyr)
+library(ggplot2)
+library(pheatmap)
+library(ggthemes)
+library(RColorBrewer)
+library(spatstat)
+library(gridExtra)
+library(ggpubr)
+library(spatstat)
+source("functions/image_analysis_function.R")
+```
+
+
+```{r}
+mibi.sce <- readRDS("../../sc-targeted-proteomics/data/mibi.sce_withDR.rds")
+colnames(mibi.sce) <- paste(mibi.sce$SampleID, mibi.sce$cellLabelInImage, sep = "_")
+
+mibi.sce$cellTypes <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                             as.character(mibi.sce$immune_group),
+                             as.character(mibi.sce$tumor_group))
+
+mibi.sce$cellTypes_group <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                                   "Micro-environment",
+                                   "Tumour")
+
+
+
+selected_chanel_mibi <- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+
+
+tiff_name_list <- list.files("../../sc-targeted-proteomics/data/TNBC_shareCellData/", pattern = ".tiff")
+tiff_name_list <- tiff_name_list[-24]
+```
+
+
+
+
+```{r}
+# color for mibi cell types
+cellTypes_group_mibi_color <- tableau_color_pal("Tableau 10")(length(unique(mibi.sce$cellTypes_group)))
+cellTypes_group_mibi_color <- c(cellTypes_group_mibi_color, "black")
+names(cellTypes_group_mibi_color) <- c(unique(mibi.sce$cellTypes_group), "Background")
+
+cellTypes_mibi_color <- tableau_color_pal("Classic 20")(length(unique(mibi.sce$cellTypes)))
+cellTypes_mibi_color <- c(cellTypes_mibi_color, "black")
+names(cellTypes_mibi_color) <- c(unique(mibi.sce$cellTypes), "Background")
+```
+
+
+
+
+```{r eval = FALSE}
+common_protein <- c("CD3", "CD68", "HLA-DR", "CD45")
+
+ot_rbind_list <- list()
+for (s in 1:length(tiff_name_list)) {
+  
+  
+  str_name <- paste("../../sc-targeted-proteomics/data/TNBC_shareCellData/", tiff_name_list[s], sep = "")
+  
+  sample_id <- as.numeric(gsub("p", "", gsub("_labeledcellData.tiff", "", tiff_name_list[s])))
+  
+  print(sample_id)
+  
+  p_sce <- mibi.sce[, mibi.sce$SampleID == sample_id]
+  p_sce <- p_sce[rowData(p_sce)$is_protein == 1, ]
+  exprsMat <- assay(p_sce, "mibi_exprs")
+  
+  
+  # Optimal transport results
+  
+  epith_ot <- read.csv(paste0("../../sc-targeted-proteomics/OT/data/mibi_exprs_ot_pred_mat_epith/pred_res_mat_all_patient_", sample_id, ".csv"), row.names = 1)
+  
+  epith_ot <- as.matrix(epith_ot)
+  
+  
+  
+  tcells_ot <- read.csv(paste0("../../sc-targeted-proteomics/OT/data/mibi_exprs_ot_pred_mat_tcells/pred_res_mat_all_patient_", sample_id, ".csv"), row.names = 1)
+  
+  tcells_ot <- as.matrix(tcells_ot)
+  
+  
+  
+  
+  rownames(epith_ot)[rownames(epith_ot) == "HLADR"] <- "HLA-DR"
+  rownames(tcells_ot)[rownames(tcells_ot) == "HLADR"] <- "HLA-DR"
+  
+
+
+  
+  ot_rbind <- rbind((epith_ot), 
+                    (tcells_ot[!rownames(tcells_ot) %in% common_protein,]))
+  
+  ot_rbind <- t(apply(ot_rbind, 1, scale))
+  
+  colnames(ot_rbind) <- colnames(exprsMat)
+  ot_rbind_list[[s]] <- ot_rbind
+  
+  
+}
+
+ot_rbind_list <- do.call(cbind, ot_rbind_list)
+saveRDS(ot_rbind_list, "output/mibi_ot_all.rds")
+
+```
+
+
+# Clustering on imputed matrix
+
+```{r}
+ot_rbind_list <- readRDS("output/mibi_ot_all.rds")
+
+mibi.sce_filtered <- mibi.sce[, colnames(ot_rbind_list)]
+
+altExp(mibi.sce_filtered, "OT") <- SummarizedExperiment(list(exprs = ot_rbind_list))
+
+
+
+
+mibi.sce_filtered <- scater::runPCA(mibi.sce_filtered,
+                                    altexp = "OT", 
+                                    ncomponents = 20,
+                                    exprs_values = "exprs", name = "OT_PCA")
+
+set.seed(2020)
+mibi.sce_filtered <- scater::runUMAP(mibi.sce_filtered,
+                                     altexp = "OT", 
+                                     exprs_values = "exprs",
+                                     pca = 20,
+                                     scale = FALSE,
+                                     n_neighbors = 20,
+                                     name = "OT_UMAP")
+
+
+# g <- scran::buildKNNGraph(mibi.sce_filtered, k = 50, use.dimred = "OT_PCA")
+# clust <- igraph::cluster_louvain(g)$membership
+# table(clust)
+
+g <- scran::buildKNNGraph(mibi.sce_filtered, k = 50, use.dimred = "OT_PCA")
+clust <- igraph::cluster_louvain(g)$membership
+table(clust)
+
+mibi.sce_filtered$ot_cluster <- as.factor(clust)
+```
+
+
+
+```{r fig.height=16}
+
+df_toPlot <- data.frame(colData(mibi.sce_filtered))
+
+cellTypes_color_cluster <- c(RColorBrewer::brewer.pal(12, "Paired"),
+                             RColorBrewer::brewer.pal(7, "Dark2"),
+                             RColorBrewer::brewer.pal(8, "Pastel2"),
+                             RColorBrewer::brewer.pal(12, "Set3"),
+                             RColorBrewer::brewer.pal(8, "Set2"))
+
+umap_mibi <- reducedDim(mibi.sce_filtered, "OT_UMAP")
+
+df_toPlot$UMAP1_ot <- umap_mibi[, 1]
+df_toPlot$UMAP2_ot <- umap_mibi[, 2]
+
+umap <- reducedDim(mibi.sce_filtered, "UMAP")
+
+df_toPlot$UMAP1 <- umap[, 1]
+df_toPlot$UMAP2 <- umap[, 2]
+
+library(scattermore)
+g1 <- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = ot_cluster)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = "Cell Type")
+
+
+g2 <- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = cellTypes)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_mibi_color) +
+  labs(color = "Cell Type")
+
+
+g3 <- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = factor(SampleID))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = "Cell Type")
+
+
+
+g4 <- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = ot_cluster)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = "Cell Type")
+
+g5 <- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = cellTypes)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_mibi_color) +
+  labs(color = "Cell Type")
+
+g6 <- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = factor(SampleID))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = "Cell Type")
+
+
+ggarrange(g1, g4, 
+          g2, g5,
+          g3, g6, ncol = 2, nrow = 3, align = "hv")
+```
+
+```{r}
+exprsMat <- assay(mibi.sce_filtered, "mibi_exprs")
+ggplot(df_toPlot, aes(x = ot_cluster, y = exprsMat["Ki67", ], fill = ot_cluster)) + 
+  geom_boxplot() +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = "bottom") +
+  scale_fill_manual(values = cellTypes_color_cluster) +
+  labs(fill = "OT Cell Type") +
+  ylab("Ki67")
+```
+
+```{r}
+g2 <- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = log(exprsMat["Ki67", ] + 1))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_viridis_c() +
+  labs(color = "Ki67")
+
+g1 <- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = log(exprsMat["Ki67", ] + 1))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_viridis_c() +
+  labs(color = "Ki67")
+
+ggarrange(g1, g2, ncol = 2, nrow = 1, align = "hv")
+```
+
+
+# Survival Analysis
+
+```{r}
+library(survival)
+library(survminer)
+```
+
+```{r}
+
+cold <- c(24, 26, 15, 22, 19, 25)
+mixed <- c(13, 39, 29, 17, 23, 1, 33, 12, 27, 8, 2, 38, 20, 7, 14, 11, 21, 31, 18)
+compart <- c(35, 28, 16, 37, 40, 4, 41, 36, 3, 5, 34, 32, 6, 9, 10)
+
+
+mibi.sce_filtered$patientGroup <- NA
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% mixed] <- "mixed"
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% compart] <- "compartmentalized"
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% cold] <- "cold"
+
+meta_patients <- unique(data.frame(colData(mibi.sce_filtered)[, c("SampleID", "patientGroup", "Survival_days_capped_2016.1.1", "Censored", "GRADE", "STAGE", "AGE_AT_DX", "TIL_score")]))
+meta_patients$STAGE <- substring(as.character(meta_patients$STAGE), 1, 1)
+meta_patients$STAGE[meta_patients$STAGE %in% c(3, 4)] <- c("3_4")
+meta_patients$Censoring <- 1 - meta_patients$Censored
+
+meta_patients <- meta_patients[!is.na(meta_patients$Survival_days_capped_2016.1.1), ]
+dim(meta_patients)
+
+colnames(meta_patients)[3] <- "SurvivalDays"
+dim(meta_patients)
+```
+
+
+```{r}
+
+fit_stage <- survfit( Surv(SurvivalDays, Censoring) ~ STAGE,
+                 data = meta_patients)
+
+
+
+ggsurvplot(fit_stage, data = meta_patients,
+           # conf.int = TRUE,
+           risk.table = TRUE, risk.table.col="strata",
+           ggtheme = theme_bw(),
+           pval = TRUE)
+
+
+fit_patientGroup <- survfit( Surv(SurvivalDays, Censoring) ~ patientGroup,
+                      data = meta_patients)
+
+
+
+ggsurvplot(fit_patientGroup, data = meta_patients,
+           # conf.int = TRUE,
+           risk.table = TRUE, risk.table.col = "strata",
+           ggtheme = theme_bw(),
+           pval = TRUE)
+
+
+```
+
+
+```{r}
+
+prop_ot <- table(mibi.sce_filtered$ot_cluster, mibi.sce_filtered$SampleID)
+rownames(prop_ot) <- paste("ot_cluster_", rownames(prop_ot), sep = "")
+
+prop_ot <- apply(prop_ot, 2, function(x) x/sum(x))
+
+meta_patients$ki67_class <- ifelse(prop_ot[15, ][as.character(meta_patients$SampleID)] > 0.06, 
+                                         "High", "Low")
+meta_patients$ki67_class <- factor(meta_patients$ki67_class,
+                                         levels = c("Low", "High"))
+table(meta_patients$ki67_class)
+
+
+fit_ki67 <- survfit( Surv(SurvivalDays, Censoring) ~ ki67_class + STAGE,
+                 data = meta_patients )
+
+ggsurvplot(fit_ki67, data = meta_patients,
+           ggtheme = theme_bw() +   theme(aspect.ratio = 0.8),
+           palette = tableau_color_pal("Tableau 20")(6)[c(6, 2, 4, 1, 3)],
+           pval = TRUE) 
+
+
+
+```
+
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
+
+

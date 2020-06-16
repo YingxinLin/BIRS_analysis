@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Yingxin Lin" />
+
+
+<title>Integration with CyTOF</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">BIRS analysis</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Overview</a>
+</li>
+<li>
+  <a href="preliminary.html">Preliminary Analysis</a>
+</li>
+<li>
+  <a href="spatial_features.html">Spatial Features</a>
+</li>
+<li>
+  <a href="integration_cytof.html">Integration with CyTOF</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Integration with CyTOF</h1>
+<h4 class="author">Yingxin Lin</h4>
+
+</div>
+
+
+<div id="data-and-package" class="section level1">
+<h1>Data and package</h1>
+<pre class="r"><code>library(raster)
+library(SingleCellExperiment)
+library(scater)
+library(plyr)
+library(ggplot2)
+library(pheatmap)
+library(ggthemes)
+library(RColorBrewer)
+library(spatstat)
+library(gridExtra)
+library(ggpubr)
+library(spatstat)
+source(&quot;functions/image_analysis_function.R&quot;)</code></pre>
+<pre class="r"><code>mibi.sce &lt;- readRDS(&quot;../../sc-targeted-proteomics/data/mibi.sce_withDR.rds&quot;)
+colnames(mibi.sce) &lt;- paste(mibi.sce$SampleID, mibi.sce$cellLabelInImage, sep = &quot;_&quot;)
+
+mibi.sce$cellTypes &lt;- ifelse(as.character(mibi.sce$immune_group) != &quot;not immune&quot;,
+                             as.character(mibi.sce$immune_group),
+                             as.character(mibi.sce$tumor_group))
+
+mibi.sce$cellTypes_group &lt;- ifelse(as.character(mibi.sce$immune_group) != &quot;not immune&quot;,
+                                   &quot;Micro-environment&quot;,
+                                   &quot;Tumour&quot;)
+
+
+
+selected_chanel_mibi &lt;- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+
+
+tiff_name_list &lt;- list.files(&quot;../../sc-targeted-proteomics/data/TNBC_shareCellData/&quot;, pattern = &quot;.tiff&quot;)
+tiff_name_list &lt;- tiff_name_list[-24]</code></pre>
+<pre class="r"><code># color for mibi cell types
+cellTypes_group_mibi_color &lt;- tableau_color_pal(&quot;Tableau 10&quot;)(length(unique(mibi.sce$cellTypes_group)))
+cellTypes_group_mibi_color &lt;- c(cellTypes_group_mibi_color, &quot;black&quot;)
+names(cellTypes_group_mibi_color) &lt;- c(unique(mibi.sce$cellTypes_group), &quot;Background&quot;)
+
+cellTypes_mibi_color &lt;- tableau_color_pal(&quot;Classic 20&quot;)(length(unique(mibi.sce$cellTypes)))
+cellTypes_mibi_color &lt;- c(cellTypes_mibi_color, &quot;black&quot;)
+names(cellTypes_mibi_color) &lt;- c(unique(mibi.sce$cellTypes), &quot;Background&quot;)</code></pre>
+<pre class="r"><code>common_protein &lt;- c(&quot;CD3&quot;, &quot;CD68&quot;, &quot;HLA-DR&quot;, &quot;CD45&quot;)
+
+ot_rbind_list &lt;- list()
+for (s in 1:length(tiff_name_list)) {
+  
+  
+  str_name &lt;- paste(&quot;../../sc-targeted-proteomics/data/TNBC_shareCellData/&quot;, tiff_name_list[s], sep = &quot;&quot;)
+  
+  sample_id &lt;- as.numeric(gsub(&quot;p&quot;, &quot;&quot;, gsub(&quot;_labeledcellData.tiff&quot;, &quot;&quot;, tiff_name_list[s])))
+  
+  print(sample_id)
+  
+  p_sce &lt;- mibi.sce[, mibi.sce$SampleID == sample_id]
+  p_sce &lt;- p_sce[rowData(p_sce)$is_protein == 1, ]
+  exprsMat &lt;- assay(p_sce, &quot;mibi_exprs&quot;)
+  
+  
+  # Optimal transport results
+  
+  epith_ot &lt;- read.csv(paste0(&quot;../../sc-targeted-proteomics/OT/data/mibi_exprs_ot_pred_mat_epith/pred_res_mat_all_patient_&quot;, sample_id, &quot;.csv&quot;), row.names = 1)
+  
+  epith_ot &lt;- as.matrix(epith_ot)
+  
+  
+  
+  tcells_ot &lt;- read.csv(paste0(&quot;../../sc-targeted-proteomics/OT/data/mibi_exprs_ot_pred_mat_tcells/pred_res_mat_all_patient_&quot;, sample_id, &quot;.csv&quot;), row.names = 1)
+  
+  tcells_ot &lt;- as.matrix(tcells_ot)
+  
+  
+  
+  
+  rownames(epith_ot)[rownames(epith_ot) == &quot;HLADR&quot;] &lt;- &quot;HLA-DR&quot;
+  rownames(tcells_ot)[rownames(tcells_ot) == &quot;HLADR&quot;] &lt;- &quot;HLA-DR&quot;
+  
+
+
+  
+  ot_rbind &lt;- rbind((epith_ot), 
+                    (tcells_ot[!rownames(tcells_ot) %in% common_protein,]))
+  
+  ot_rbind &lt;- t(apply(ot_rbind, 1, scale))
+  
+  colnames(ot_rbind) &lt;- colnames(exprsMat)
+  ot_rbind_list[[s]] &lt;- ot_rbind
+  
+  
+}
+
+ot_rbind_list &lt;- do.call(cbind, ot_rbind_list)
+saveRDS(ot_rbind_list, &quot;output/mibi_ot_all.rds&quot;)</code></pre>
+</div>
+<div id="clustering-on-imputed-matrix" class="section level1">
+<h1>Clustering on imputed matrix</h1>
+<pre class="r"><code>ot_rbind_list &lt;- readRDS(&quot;output/mibi_ot_all.rds&quot;)
+
+mibi.sce_filtered &lt;- mibi.sce[, colnames(ot_rbind_list)]
+
+altExp(mibi.sce_filtered, &quot;OT&quot;) &lt;- SummarizedExperiment(list(exprs = ot_rbind_list))
+
+
+
+
+mibi.sce_filtered &lt;- scater::runPCA(mibi.sce_filtered,
+                                    altexp = &quot;OT&quot;, 
+                                    ncomponents = 20,
+                                    exprs_values = &quot;exprs&quot;, name = &quot;OT_PCA&quot;)
+
+set.seed(2020)
+mibi.sce_filtered &lt;- scater::runUMAP(mibi.sce_filtered,
+                                     altexp = &quot;OT&quot;, 
+                                     exprs_values = &quot;exprs&quot;,
+                                     pca = 20,
+                                     scale = FALSE,
+                                     n_neighbors = 20,
+                                     name = &quot;OT_UMAP&quot;)
+
+
+# g &lt;- scran::buildKNNGraph(mibi.sce_filtered, k = 50, use.dimred = &quot;OT_PCA&quot;)
+# clust &lt;- igraph::cluster_louvain(g)$membership
+# table(clust)
+
+g &lt;- scran::buildKNNGraph(mibi.sce_filtered, k = 50, use.dimred = &quot;OT_PCA&quot;)
+clust &lt;- igraph::cluster_louvain(g)$membership
+table(clust)</code></pre>
+<pre><code>## clust
+##     1     2     3     4     5     6     7     8     9    10    11    12    13 
+##  4110 12520 16729 18822  1002 11641 11937  8758  1874  1541  3846 11122  1967 
+##    14    15    16    17    18    19    20    21    22    23    24    25 
+##  9738 13221  1327 13087   422 22752  6523  8367  3470  8181   722  3999</code></pre>
+<pre class="r"><code>mibi.sce_filtered$ot_cluster &lt;- as.factor(clust)</code></pre>
+<pre class="r"><code>df_toPlot &lt;- data.frame(colData(mibi.sce_filtered))
+
+cellTypes_color_cluster &lt;- c(RColorBrewer::brewer.pal(12, &quot;Paired&quot;),
+                             RColorBrewer::brewer.pal(7, &quot;Dark2&quot;),
+                             RColorBrewer::brewer.pal(8, &quot;Pastel2&quot;),
+                             RColorBrewer::brewer.pal(12, &quot;Set3&quot;),
+                             RColorBrewer::brewer.pal(8, &quot;Set2&quot;))
+
+umap_mibi &lt;- reducedDim(mibi.sce_filtered, &quot;OT_UMAP&quot;)
+
+df_toPlot$UMAP1_ot &lt;- umap_mibi[, 1]
+df_toPlot$UMAP2_ot &lt;- umap_mibi[, 2]
+
+umap &lt;- reducedDim(mibi.sce_filtered, &quot;UMAP&quot;)
+
+df_toPlot$UMAP1 &lt;- umap[, 1]
+df_toPlot$UMAP2 &lt;- umap[, 2]
+
+library(scattermore)
+g1 &lt;- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = ot_cluster)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = &quot;Cell Type&quot;)
+
+
+g2 &lt;- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = cellTypes)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_mibi_color) +
+  labs(color = &quot;Cell Type&quot;)
+
+
+g3 &lt;- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = factor(SampleID))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = &quot;Cell Type&quot;)
+
+
+
+g4 &lt;- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = ot_cluster)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = &quot;Cell Type&quot;)
+
+g5 &lt;- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = cellTypes)) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_mibi_color) +
+  labs(color = &quot;Cell Type&quot;)
+
+g6 &lt;- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = factor(SampleID))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_manual(values = cellTypes_color_cluster) +
+  labs(color = &quot;Cell Type&quot;)
+
+
+ggarrange(g1, g4, 
+          g2, g5,
+          g3, g6, ncol = 2, nrow = 3, align = &quot;hv&quot;)</code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-6-1.png" width="1152" /></p>
+<pre class="r"><code>exprsMat &lt;- assay(mibi.sce_filtered, &quot;mibi_exprs&quot;)
+ggplot(df_toPlot, aes(x = ot_cluster, y = exprsMat[&quot;Ki67&quot;, ], fill = ot_cluster)) + 
+  geom_boxplot() +
+  theme_bw() +
+  theme(aspect.ratio = 1, legend.position = &quot;bottom&quot;) +
+  scale_fill_manual(values = cellTypes_color_cluster) +
+  labs(fill = &quot;OT Cell Type&quot;) +
+  ylab(&quot;Ki67&quot;)</code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-7-1.png" width="1152" /></p>
+<pre class="r"><code>g2 &lt;- ggplot(df_toPlot, aes(x = UMAP1_ot, y = UMAP2_ot, color = log(exprsMat[&quot;Ki67&quot;, ] + 1))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_viridis_c() +
+  labs(color = &quot;Ki67&quot;)
+
+g1 &lt;- ggplot(df_toPlot, aes(x = UMAP1, y = UMAP2, color = log(exprsMat[&quot;Ki67&quot;, ] + 1))) + 
+  geom_scattermore() +
+  theme_bw() +
+  theme(aspect.ratio = 1) +
+  scale_color_viridis_c() +
+  labs(color = &quot;Ki67&quot;)
+
+ggarrange(g1, g2, ncol = 2, nrow = 1, align = &quot;hv&quot;)</code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-8-1.png" width="1152" /></p>
+</div>
+<div id="survival-analysis" class="section level1">
+<h1>Survival Analysis</h1>
+<pre class="r"><code>library(survival)
+library(survminer)</code></pre>
+<pre class="r"><code>cold &lt;- c(24, 26, 15, 22, 19, 25)
+mixed &lt;- c(13, 39, 29, 17, 23, 1, 33, 12, 27, 8, 2, 38, 20, 7, 14, 11, 21, 31, 18)
+compart &lt;- c(35, 28, 16, 37, 40, 4, 41, 36, 3, 5, 34, 32, 6, 9, 10)
+
+
+mibi.sce_filtered$patientGroup &lt;- NA
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% mixed] &lt;- &quot;mixed&quot;
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% compart] &lt;- &quot;compartmentalized&quot;
+mibi.sce_filtered$patientGroup[mibi.sce_filtered$SampleID %in% cold] &lt;- &quot;cold&quot;
+
+meta_patients &lt;- unique(data.frame(colData(mibi.sce_filtered)[, c(&quot;SampleID&quot;, &quot;patientGroup&quot;, &quot;Survival_days_capped_2016.1.1&quot;, &quot;Censored&quot;, &quot;GRADE&quot;, &quot;STAGE&quot;, &quot;AGE_AT_DX&quot;, &quot;TIL_score&quot;)]))
+meta_patients$STAGE &lt;- substring(as.character(meta_patients$STAGE), 1, 1)
+meta_patients$STAGE[meta_patients$STAGE %in% c(3, 4)] &lt;- c(&quot;3_4&quot;)
+meta_patients$Censoring &lt;- 1 - meta_patients$Censored
+
+meta_patients &lt;- meta_patients[!is.na(meta_patients$Survival_days_capped_2016.1.1), ]
+dim(meta_patients)</code></pre>
+<pre><code>## [1] 38  9</code></pre>
+<pre class="r"><code>colnames(meta_patients)[3] &lt;- &quot;SurvivalDays&quot;
+dim(meta_patients)</code></pre>
+<pre><code>## [1] 38  9</code></pre>
+<pre class="r"><code>fit_stage &lt;- survfit( Surv(SurvivalDays, Censoring) ~ STAGE,
+                 data = meta_patients)
+
+
+
+ggsurvplot(fit_stage, data = meta_patients,
+           # conf.int = TRUE,
+           risk.table = TRUE, risk.table.col=&quot;strata&quot;,
+           ggtheme = theme_bw(),
+           pval = TRUE)</code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-11-1.png" width="1152" /></p>
+<pre class="r"><code>fit_patientGroup &lt;- survfit( Surv(SurvivalDays, Censoring) ~ patientGroup,
+                      data = meta_patients)
+
+
+
+ggsurvplot(fit_patientGroup, data = meta_patients,
+           # conf.int = TRUE,
+           risk.table = TRUE, risk.table.col = &quot;strata&quot;,
+           ggtheme = theme_bw(),
+           pval = TRUE)</code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-11-2.png" width="1152" /></p>
+<pre class="r"><code>prop_ot &lt;- table(mibi.sce_filtered$ot_cluster, mibi.sce_filtered$SampleID)
+rownames(prop_ot) &lt;- paste(&quot;ot_cluster_&quot;, rownames(prop_ot), sep = &quot;&quot;)
+
+prop_ot &lt;- apply(prop_ot, 2, function(x) x/sum(x))
+
+meta_patients$ki67_class &lt;- ifelse(prop_ot[15, ][as.character(meta_patients$SampleID)] &gt; 0.06, 
+                                         &quot;High&quot;, &quot;Low&quot;)
+meta_patients$ki67_class &lt;- factor(meta_patients$ki67_class,
+                                         levels = c(&quot;Low&quot;, &quot;High&quot;))
+table(meta_patients$ki67_class)</code></pre>
+<pre><code>## 
+##  Low High 
+##   23   15</code></pre>
+<pre class="r"><code>fit_ki67 &lt;- survfit( Surv(SurvivalDays, Censoring) ~ ki67_class + STAGE,
+                 data = meta_patients )
+
+ggsurvplot(fit_ki67, data = meta_patients,
+           ggtheme = theme_bw() +   theme(aspect.ratio = 0.8),
+           palette = tableau_color_pal(&quot;Tableau 20&quot;)(6)[c(6, 2, 4, 1, 3)],
+           pval = TRUE) </code></pre>
+<p><img src="integration_cytof_files/figure-html/unnamed-chunk-12-1.png" width="1152" /></p>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session Information</h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R Under development (unstable) (2020-03-25 r78063)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS Catalina 10.15.4
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
+## 
+## attached base packages:
+## [1] parallel  stats4    stats     graphics  grDevices utils     datasets 
+## [8] methods   base     
+## 
+## other attached packages:
+##  [1] survminer_0.4.6             survival_3.1-12            
+##  [3] scattermore_0.6             ggpubr_0.2.5               
+##  [5] magrittr_1.5                gridExtra_2.3              
+##  [7] spatstat_1.64-1             rpart_4.1-15               
+##  [9] nlme_3.1-145                spatstat.data_1.4-3        
+## [11] RColorBrewer_1.1-2          ggthemes_4.2.0             
+## [13] pheatmap_1.0.12             plyr_1.8.6                 
+## [15] scater_1.15.29              ggplot2_3.3.0              
+## [17] SingleCellExperiment_1.9.3  SummarizedExperiment_1.17.5
+## [19] DelayedArray_0.13.12        matrixStats_0.56.0         
+## [21] Biobase_2.47.3              GenomicRanges_1.39.3       
+## [23] GenomeInfoDb_1.23.16        IRanges_2.21.8             
+## [25] S4Vectors_0.25.15           BiocGenerics_0.33.3        
+## [27] raster_3.1-5                sp_1.4-1                   
+## 
+## loaded via a namespace (and not attached):
+##  [1] ggbeeswarm_0.6.0         colorspace_1.4-1         ggsignif_0.6.0          
+##  [4] deldir_0.1-25            ellipsis_0.3.0           XVector_0.27.2          
+##  [7] BiocNeighbors_1.5.2      farver_2.0.3             RSpectra_0.16-0         
+## [10] fansi_0.4.1              codetools_0.2-16         splines_4.0.0           
+## [13] knitr_1.28               polyclip_1.10-0          broom_0.5.5             
+## [16] km.ci_0.5-2              uwot_0.1.8               compiler_4.0.0          
+## [19] dqrng_0.2.1              backports_1.1.6          assertthat_0.2.1        
+## [22] Matrix_1.2-18            limma_3.43.5             cli_2.0.2               
+## [25] BiocSingular_1.3.2       htmltools_0.4.0          tools_4.0.0             
+## [28] rsvd_1.0.3               igraph_1.2.5             gtable_0.3.0            
+## [31] glue_1.4.0               GenomeInfoDbData_1.2.2   dplyr_0.8.5             
+## [34] Rcpp_1.0.4.6             vctrs_0.2.4              DelayedMatrixStats_1.9.1
+## [37] xfun_0.12                stringr_1.4.0            lifecycle_0.2.0         
+## [40] irlba_2.3.3              statmod_1.4.34           goftest_1.2-2           
+## [43] edgeR_3.29.1             zoo_1.8-7                zlibbioc_1.33.1         
+## [46] scales_1.1.0             spatstat.utils_1.17-0    yaml_2.2.1              
+## [49] KMsurv_0.1-5             stringi_1.4.6            scran_1.15.26           
+## [52] BiocParallel_1.21.2      rlang_0.4.5              pkgconfig_2.0.3         
+## [55] bitops_1.0-6             evaluate_0.14            lattice_0.20-41         
+## [58] purrr_0.3.3              tensor_1.5               labeling_0.3            
+## [61] cowplot_1.0.0            tidyselect_1.0.0         RcppAnnoy_0.0.16        
+## [64] R6_2.4.1                 generics_0.0.2           pillar_1.4.3            
+## [67] withr_2.1.2              mgcv_1.8-31              abind_1.4-5             
+## [70] RCurl_1.98-1.1           tibble_3.0.0             crayon_1.3.4            
+## [73] survMisc_0.5.5           rmarkdown_2.1            viridis_0.5.1           
+## [76] locfit_1.5-9.4           grid_4.0.0               data.table_1.12.8       
+## [79] digest_0.6.25            xtable_1.8-4             tidyr_1.0.2             
+## [82] munsell_0.5.0            beeswarm_0.2.3           viridisLite_0.3.0       
+## [85] vipor_0.4.5</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

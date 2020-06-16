@@ -9,6 +9,8 @@ navbar:
       href: preliminary.html
     - text: "Spatial Features"
       href: spatial_features.html
+    - text: "Integration with CyTOF"
+      href: integration_cytof.html
 output:
   html_document:
     theme: cosmo
