@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Yingxin Lin" />
+
+
+<title>Spatial Features</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 51px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h2 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h3 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h4 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h5 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.section h6 {
+  padding-top: 56px;
+  margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">BIRS analysis</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Overview</a>
+</li>
+<li>
+  <a href="preliminary.html">Preliminary Analysis</a>
+</li>
+<li>
+  <a href="spatial_features.html">Spatial Features</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+<div class="btn-group pull-right">
+<button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Spatial Features</h1>
+<h4 class="author">Yingxin Lin</h4>
+
+</div>
+
+
+<div id="package-and-data" class="section level1">
+<h1>Package and data</h1>
+<div id="packages" class="section level2">
+<h2>Packages</h2>
+<pre class="r"><code>library(raster)
+library(plyr)
+library(ggpubr)
+library(spatstat)
+source(&quot;functions/image_analysis_function.R&quot;)</code></pre>
+</div>
+<div id="mibi-tof-data" class="section level2">
+<h2>MIBI-TOF data</h2>
+<pre class="r"><code>mibi.sce &lt;- readRDS(&quot;../../sc-targeted-proteomics/data/mibi.sce_withDR.rds&quot;)
+colnames(mibi.sce) &lt;- paste(mibi.sce$SampleID, mibi.sce$cellLabelInImage, sep = &quot;_&quot;)
+
+mibi.sce$cellTypes &lt;- ifelse(as.character(mibi.sce$immune_group) != &quot;not immune&quot;,
+                             as.character(mibi.sce$immune_group),
+                             as.character(mibi.sce$tumor_group))
+
+mibi.sce$cellTypes_group &lt;- ifelse(as.character(mibi.sce$immune_group) != &quot;not immune&quot;,
+                                   &quot;Micro-environment&quot;,
+                                   &quot;Tumour&quot;)
+
+
+selected_chanel_mibi &lt;- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+interested_protein &lt;- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+interested_protein &lt;- interested_protein[!interested_protein %in% c(&quot;OX40&quot;)]
+interested_protein &lt;- c(&quot;SMA&quot;, interested_protein)
+
+
+tiff_name_list &lt;- list.files(&quot;../../sc-targeted-proteomics/data/TNBC_shareCellData/&quot;, pattern = &quot;.tiff&quot;)
+tiff_name_list &lt;- tiff_name_list[-24]</code></pre>
+<pre class="r"><code>cellTypes_group_mibi_color &lt;- tableau_color_pal(&quot;Tableau 10&quot;)(length(unique(mibi.sce$cellTypes_group)))
+cellTypes_group_mibi_color &lt;- c(cellTypes_group_mibi_color, &quot;black&quot;)
+names(cellTypes_group_mibi_color) &lt;- c(unique(mibi.sce$cellTypes_group)[c(2,1)],
+                                       &quot;Background&quot;)
+
+cellTypes_mibi_color &lt;- tableau_color_pal(&quot;Classic 20&quot;)(length(unique(mibi.sce$cellTypes)))
+cellTypes_mibi_color &lt;- c(cellTypes_mibi_color, &quot;black&quot;)
+names(cellTypes_mibi_color) &lt;- c(unique(mibi.sce$cellTypes), &quot;Background&quot;)</code></pre>
+</div>
+</div>
+<div id="visualisation-of-the-image" class="section level1">
+<h1>Visualisation of the image</h1>
+<pre class="r"><code># example
+s = 27
+str_name &lt;- paste(&quot;../../sc-targeted-proteomics/data/TNBC_shareCellData/&quot;, tiff_name_list[s], sep = &quot;&quot;)
+cat(&quot;The .tiff file name is:&quot;)</code></pre>
+<pre><code>## The .tiff file name is:</code></pre>
+<pre class="r"><code>print(tiff_name_list[s])</code></pre>
+<pre><code>## [1] &quot;p34_labeledcellData.tiff&quot;</code></pre>
+<pre class="r"><code>sample_id &lt;- as.numeric(gsub(&quot;p&quot;, &quot;&quot;, gsub(&quot;_labeledcellData.tiff&quot;, &quot;&quot;, tiff_name_list[s])))
+
+r &lt;- raster(str_name)
+# create an rater object
+r</code></pre>
+<pre><code>## class      : RasterLayer 
+## dimensions : 2048, 2048, 4194304  (nrow, ncol, ncell)
+## resolution : 1, 1  (x, y)
+## extent     : 0, 2048, 0, 2048  (xmin, xmax, ymin, ymax)
+## crs        : NA 
+## source     : /Users/yingxinlin/Dropbox (Sydney Uni)/PhDProj/BANFF2020/sc-targeted-proteomics/data/TNBC_shareCellData/p34_labeledcellData.tiff 
+## names      : p34_labeledcellData 
+## values     : 0, 65535  (min, max)</code></pre>
+<pre class="r"><code>p_sce &lt;- mibi.sce[, mibi.sce$SampleID == sample_id]
+p_sce &lt;- p_sce[interested_protein, ]
+exprsMat &lt;- assay(p_sce, &quot;mibi_exprs&quot;)
+
+
+group_raster_values &lt;- mapValueToCoord(r, 
+                                       p_sce$cellLabelInImage,
+                                       p_sce$cellTypes_group)
+
+
+cellTypes_raster_values &lt;- mapValueToCoord(r, 
+                                           p_sce$cellLabelInImage,
+                                           p_sce$cellTypes)
+
+
+
+
+
+
+ddf &lt;- rasterToPoints(r)
+ddf &lt;- data.frame(ddf)
+colnames(ddf) &lt;- c(&quot;X&quot;, &quot;Y&quot;, &quot;value&quot;)
+ddf$cellType_group &lt;- group_raster_values
+ddf$cellType &lt;- cellTypes_raster_values
+
+g_cellGroup &lt;- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType_group))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_group_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;) +
+  labs(fill = &quot;Cell Type&quot;)
+
+g_cellTypes &lt;- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;) +
+  labs(fill = &quot;Cell Type&quot;)
+
+ggarrange(g_cellGroup, g_cellTypes, ncol = 2, nrow = 1, align = &quot;hv&quot;)</code></pre>
+<p><img src="spatial_features_files/figure-html/unnamed-chunk-4-1.png" width="1152" /></p>
+</div>
+<div id="spatial-features" class="section level1">
+<h1>Spatial features</h1>
+<div id="create-ppp-object" class="section level2">
+<h2>Create <code>ppp</code> object</h2>
+<pre class="r"><code>coord_r &lt;- rasterToPoints(r)
+center_r_x &lt;- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+group &lt;- center_r_x$Group.1
+center_r_x &lt;- center_r_x$x
+center_r_y &lt;- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+center_r &lt;- data.frame(x = center_r_x, y = center_r_y, group = group)
+cell_label &lt;- raster::values(r)
+notInLabelnotInLabel &lt;- unique(cell_label[!cell_label %in% p_sce$cellLabelInImage])
+
+
+r_cellType &lt;- mapvalues((center_r$group), 
+                        from = notInLabelnotInLabel, 
+                        to = rep(0, length(notInLabelnotInLabel)))
+
+r_cellType &lt;- mapvalues((r_cellType), 
+                        from = p_sce$cellLabelInImage, 
+                        to = p_sce$cellTypes)
+
+center_r$cellTypes &lt;- r_cellType
+
+center_r &lt;- center_r[center_r$cellTypes != &quot;0&quot;, ]
+
+
+
+keep &lt;- center_r$cellTypes != &quot;Unidentified&quot;
+
+cell_points &lt;- ppp(x = center_r[keep, 1], 
+                   y = center_r[keep, 2], 
+                   check = FALSE,
+                   yrange = c(0, 2048), xrange = c(0, 2048),
+                   marks = as.factor(center_r[keep, ]$cellTypes))
+
+
+cell_points_cts &lt;- ppp(x = center_r[, 1], y = center_r[, 2], 
+                       check = FALSE,
+                       yrange = c(0, round(max(coord_r[, 2]))), 
+                       xrange = c(0, round(max(coord_r[, 1]))),
+                       marks = t(exprsMat))</code></pre>
+</div>
+<div id="morans-i" class="section level2">
+<h2>Moran’s I</h2>
+<pre class="r"><code>d &lt;- pairdist(cell_points_cts, squared = FALSE)
+diag(d) &lt;- Inf
+
+print(&quot;Calculate moran&#39;stats&quot;)</code></pre>
+<pre><code>## [1] &quot;Calculate moran&#39;stats&quot;</code></pre>
+<pre class="r"><code>w &lt;- 1/d
+
+moran_cor &lt;- list()
+for (i in 1:nrow(exprsMat)) {
+  cat(i, &quot;...&quot;)
+  moran_cor[[i]] &lt;- try(ape::Moran.I(exprsMat[i, ], w)$observed, silent = TRUE)
+  if (is(moran_cor[[i]], &quot;try-error&quot;)) {
+    moran_cor[[i]] &lt;- NA
+  }
+}</code></pre>
+<pre><code>## 1 ...2 ...3 ...4 ...5 ...6 ...7 ...8 ...9 ...10 ...11 ...12 ...13 ...14 ...15 ...16 ...17 ...18 ...19 ...20 ...21 ...22 ...23 ...24 ...25 ...26 ...27 ...28 ...29 ...30 ...31 ...32 ...33 ...34 ...35 ...36 ...37 ...38 ...</code></pre>
+<pre class="r"><code>names(moran_cor) &lt;- rownames(exprsMat)
+moran_cor &lt;- unlist(moran_cor)
+sort(moran_cor)</code></pre>
+<pre><code>##         CD209          Lag3           p53           IDO         PD-L1 
+## -0.0002428817  0.0017225804  0.0035598651  0.0047270526  0.0063576773 
+##          CD31          CD20           PD1      Vimentin           CD3 
+##  0.0105429322  0.0109012654  0.0120904686  0.0129673987  0.0172632383 
+##           CD8        CSF-1R           CD4         CD11c          CD68 
+##  0.0172774263  0.0198522253  0.0222447901  0.0252125266  0.0280727126 
+##           SMA      Keratin6          CD16     Keratin17          CD45 
+##  0.0282640638  0.0437609190  0.0500115943  0.0511392611  0.0538109643 
+##        HLA-DR    phospho-S6         CD138  Beta catenin   HLA_Class_1 
+##  0.0561101252  0.0598209782  0.0755679125  0.0798467553  0.0858426310 
+##        H3K9ac      H3K27me3          EGFR         CD11b   Pan-Keratin 
+##  0.0880518716  0.1051013600  0.1092800351  0.1137752471  0.1153218565 
+##        CD45RO          CD63           MPO 
+##  0.1201093367  0.1927649007  0.3076854292</code></pre>
+<pre class="r"><code>exprsMat_in_raster &lt;- apply(exprsMat, 1, function(x) {
+  mapValueToCoord(r, 
+                  p_sce$cellLabelInImage,
+                  x,
+                  cont = TRUE)
+})
+
+
+g_MPO &lt;- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, 
+                              fill = scale(exprsMat_in_raster[, &quot;MPO&quot;]))) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = viridis::viridis(120)[c(seq(1, 40, 2), 41:120)]) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;) +
+  labs(fill = &quot;MPO&quot;)
+
+
+g_CD8 &lt;- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, 
+                              fill = scale(exprsMat_in_raster[, &quot;CD8&quot;]))) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = viridis::viridis(120)[c(seq(1, 40, 2), 41:120)]) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;) +
+  labs(fill = &quot;CD8&quot;)
+
+ggarrange(g_MPO, g_CD8, align = &quot;hv&quot;, ncol = 2)</code></pre>
+<p><img src="spatial_features_files/figure-html/unnamed-chunk-7-1.png" width="1152" /></p>
+</div>
+<div id="nearest-neighbour-correlation" class="section level2">
+<h2>Nearest Neighbour Correlation</h2>
+<pre class="r"><code>nncorr_protein &lt;- nncorr(cell_points_cts)[&quot;correlation&quot;, ]
+nncorr_protein</code></pre>
+<pre><code>##          SMA     Vimentin         B7H3        FoxP3         Lag3          CD4 
+##    0.4052723    0.2548168           NA           NA    0.1606185    0.3639350 
+##         CD16         CD56          PD1         CD31        PD-L1         EGFR 
+##    0.5324587           NA    0.3725052    0.2341071    0.6420517    0.8235187 
+##         Ki67        CD209        CD11c        CD138        CD163         CD68 
+##           NA           NA    0.4182438    0.5859682           NA    0.5251670 
+##       CSF-1R          CD8          CD3          IDO    Keratin17         CD63 
+##    0.2855042    0.3268527    0.3493794    0.2801131    0.6492494    0.6554553 
+##       CD45RO         CD20          p53 Beta catenin       HLA-DR        CD11b 
+##    0.5724436    0.3654035    0.1027180    0.6770375    0.5709631    0.5313023 
+##         CD45       H3K9ac  Pan-Keratin     H3K27me3   phospho-S6          MPO 
+##    0.4819535    0.5266738    0.8753919    0.5294520    0.5281559    0.8957507 
+##     Keratin6  HLA_Class_1 
+##    0.7372707    0.7280990</code></pre>
+<pre class="r"><code>nn_which_res &lt;- nnwhich(cell_points_cts)
+
+dtp &lt;- data.frame(MPO = marks(cell_points_cts)[, &quot;MPO&quot;],
+                  MPO_NN_k1 = marks(cell_points_cts)[nn_which_res, &quot;MPO&quot;],
+                  CD8 = marks(cell_points_cts)[, &quot;CD8&quot;],
+                  CD8_NN_k1 = marks(cell_points_cts)[nn_which_res, &quot;CD8&quot;])
+
+g1 &lt;- ggplot(dtp, aes(x = MPO, y = MPO_NN_k1)) +
+  geom_point(alpha = 0.5, size = 2) +
+  theme_bw() +
+  scale_color_viridis_c() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;, 
+        panel.grid = element_blank(),
+        text = element_text(size = 14)) +
+  ylab(&quot;MPO (1NN)&quot;)
+
+g2 &lt;- ggplot(dtp, aes(x = CD8, y = CD8_NN_k1)) +
+  geom_point(alpha = 0.5, size = 2) +
+  theme_bw() +
+  scale_color_viridis_c() +
+  theme(aspect.ratio = 1, legend.position = &quot;right&quot;, 
+        panel.grid = element_blank(),
+        text = element_text(size = 14)) +
+  ylab(&quot;CD8 (1NN)&quot;)
+
+ggarrange(g1, g2, ncol = 2, nrow = 1, align = &quot;hv&quot;)</code></pre>
+<p><img src="spatial_features_files/figure-html/unnamed-chunk-9-1.png" width="1152" /></p>
+</div>
+<div id="cell-type-interaction-composition" class="section level2">
+<h2>Cell type interaction composition</h2>
+<pre class="r"><code>tab &lt;- table(center_r[keep, ]$cellTypes)
+cellTypes_toTest &lt;- names(tab[which(tab &gt; 10)])
+cellTypes_pair &lt;- expand.grid(cellTypes_toTest, cellTypes_toTest,
+                              stringsAsFactors = FALSE)
+
+
+print(&quot;Calculate NN info&quot;)</code></pre>
+<pre><code>## [1] &quot;Calculate NN info&quot;</code></pre>
+<pre class="r"><code># Calcualte the pairwise distance
+d &lt;- pairdist(cell_points, squared = FALSE)
+diag(d) &lt;- Inf
+
+nn_list &lt;- apply(d, 1, function(x) which(x &lt; 50))
+
+nn_list_cellTypes &lt;- lapply(seq_along(nn_list), function(idx) {
+  if (length(nn_list[[idx]]) &gt; 0) {
+    paste(center_r[keep, ]$cellTypes[idx],
+          center_r[keep, ]$cellTypes[nn_list[[idx]]], sep = &quot;_&quot;)
+  }
+})
+
+nn_list_cellTypes &lt;- unlist(nn_list_cellTypes)
+nn_list_cellTypes &lt;- rearrange_string(nn_list_cellTypes)
+nn_list_cellTypes &lt;- table(nn_list_cellTypes)
+cat(&quot;Top 10 cell type interaction&quot;)</code></pre>
+<pre><code>## Top 10 cell type interaction</code></pre>
+<pre class="r"><code>sort(nn_list_cellTypes/sum(nn_list_cellTypes), decreasing = TRUE)[1:10]</code></pre>
+<pre><code>## nn_list_cellTypes
+## Keratin-positive tumor_Keratin-positive tumor 
+##                                    0.30254477 
+##                       Neutrophils_Neutrophils 
+##                                    0.22207823 
+##                       Macrophages_Macrophages 
+##                                    0.06880302 
+##            Keratin-positive tumor_Macrophages 
+##                                    0.06055608 
+##                      Macrophages_Other immune 
+##                                    0.04971725 
+##                     Other immune_Other immune 
+##                                    0.04936381 
+##                              CD8_Other immune 
+##                                    0.03216305 
+##                               CD8_Macrophages 
+##                                    0.02921772 
+##           Keratin-positive tumor_Other immune 
+##                                    0.02462300 
+##            Keratin-positive tumor_Neutrophils 
+##                                    0.02297361</code></pre>
+</div>
+<div id="l-function" class="section level2">
+<h2>L function</h2>
+<pre class="r"><code>print(&quot;Calculate L&#39;stats (cellType1)&quot;)</code></pre>
+<pre><code>## [1] &quot;Calculate L&#39;stats (cellType1)&quot;</code></pre>
+<pre class="r"><code>L_patient &lt;- list()
+for (i in 1:nrow(cellTypes_pair)) {
+  # cat(cellTypes_pair[i,], &quot;...&quot;)
+  L_patient[[i]] &lt;- L_stats(cell_points, 
+                            from = cellTypes_pair[i, 1],
+                            to = cellTypes_pair[i, 2],
+                            L_dist = 50)
+}
+
+L_patient &lt;- do.call(c, L_patient)
+names(L_patient) &lt;- paste(cellTypes_pair[, 1], cellTypes_pair[, 2], sep = &quot;_&quot;)</code></pre>
+<pre class="r"><code>L &lt;- spatstat::Lcross(cell_points, 
+                      from = &quot;Neutrophils&quot;,
+                      to = &quot;Neutrophils&quot;,
+                      verbose = FALSE,
+                      correction = &quot;best&quot;)
+
+L_env &lt;- envelope(cell_points, Lcross, 
+                  from = &quot;Neutrophils&quot;,
+                  to = &quot;Neutrophils&quot;)</code></pre>
+<pre><code>## Generating 99 simulations of CSR  ...
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+## 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+## 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98,  99.
+## 
+## Done.</code></pre>
+<pre class="r"><code>plot(L_env, xlim = c(0, 200), legend = FALSE)</code></pre>
+<p><img src="spatial_features_files/figure-html/unnamed-chunk-12-1.png" width="1152" /></p>
+<pre class="r"><code>L &lt;- spatstat::Lcross(cell_points, 
+                      from = &quot;Neutrophils&quot;,
+                      to = &quot;Keratin-positive tumor&quot;,
+                      verbose = FALSE,
+                      correction = &quot;best&quot;)
+
+L_env &lt;- envelope(cell_points, Lcross, 
+                  from = &quot;Neutrophils&quot;,
+                  to = &quot;Keratin-positive tumor&quot;)</code></pre>
+<pre><code>## Generating 99 simulations of CSR  ...
+## 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+## 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+## 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98,  99.
+## 
+## Done.</code></pre>
+<pre class="r"><code>plot(L_env, xlim = c(0, 200), legend = FALSE)</code></pre>
+<p><img src="spatial_features_files/figure-html/unnamed-chunk-12-2.png" width="1152" /></p>
+<pre class="r"><code># The following for loop will generate the spatial features for all images 
+# in MIBI-TOF data
+
+spat_stats_list_all &lt;- list()
+
+
+for (s in 1:length(tiff_name_list)) {
+  
+  str_name &lt;- paste(&quot;../../data/TNBC_shareCellData/&quot;, tiff_name_list[s], sep = &quot;&quot;)
+  
+  sample_id &lt;- as.numeric(gsub(&quot;p&quot;, &quot;&quot;, gsub(&quot;_labeledcellData.tiff&quot;, &quot;&quot;, tiff_name_list[s])))
+  
+  print(str_name)
+  print(sample_id)
+  r &lt;- raster(str_name)
+  r
+  
+  p_sce &lt;- mibi.sce[, mibi.sce$SampleID == sample_id]
+  p_sce &lt;- p_sce[interested_protein, ]
+  exprsMat &lt;- assay(p_sce, &quot;mibi_exprs&quot;)
+  
+  
+  
+  print(table(p_sce$immune_group))
+  
+  
+  group_raster_values &lt;- mapValueToCoord(r, 
+                                         p_sce$cellLabelInImage,
+                                         p_sce$cellTypes_group)
+  
+  
+  cellTypes_raster_values &lt;- mapValueToCoord(r, 
+                                             p_sce$cellLabelInImage,
+                                             p_sce$cellTypes)
+  
+  
+  
+  
+  
+  
+  ddf &lt;- rasterToPoints(r)
+  ddf &lt;- data.frame(ddf)
+  colnames(ddf) &lt;- c(&quot;X&quot;, &quot;Y&quot;, &quot;value&quot;)
+  ddf$cellType_group &lt;- group_raster_values
+  ddf$cellType &lt;- cellTypes_raster_values
+  
+  
+  
+  
+  coord_r &lt;- rasterToPoints(r)
+  center_r_x &lt;- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+  group &lt;- center_r_x$Group.1
+  center_r_x &lt;- center_r_x$x
+  center_r_y &lt;- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+  
+  center_r &lt;- data.frame(x = center_r_x, y = center_r_y, group = group)
+  
+  cell_label &lt;- raster::values(r)
+  notInLabelnotInLabel &lt;- unique(cell_label[!cell_label %in% p_sce$cellLabelInImage])
+  
+  
+  
+  
+  r_cellType_group &lt;- mapvalues((center_r$group), 
+                                from = notInLabelnotInLabel, 
+                                to = rep(0, length(notInLabelnotInLabel)))
+  
+  r_cellType_group &lt;- mapvalues((r_cellType_group), 
+                                from = p_sce$cellLabelInImage, 
+                                to = p_sce$cellTypes_group)
+  
+  center_r$cellTypes &lt;- r_cellType_group
+  
+  r_cellType &lt;- mapvalues((center_r$group), 
+                          from = notInLabelnotInLabel, 
+                          to = rep(0, length(notInLabelnotInLabel)))
+  
+  r_cellType &lt;- mapvalues((r_cellType), 
+                          from = p_sce$cellLabelInImage, 
+                          to = p_sce$cellTypes)
+  
+  center_r$cellTypes2 &lt;- r_cellType
+  
+ 
+  
+  center_r &lt;- center_r[center_r$cellTypes != &quot;0&quot;, ]
+  
+  
+  print(&quot;For oringinal label&quot;)
+  
+  keep &lt;- center_r$cellTypes2 != &quot;Unidentified&quot;
+  
+  cell_points &lt;- ppp(x = center_r[keep, 1], 
+                     y = center_r[keep, 2], 
+                     check = FALSE,
+                     yrange = c(0, 2048), xrange = c(0, 2048),
+                     marks = as.factor(center_r[keep, ]$cellTypes2))
+  
+  tab &lt;- table(center_r[keep, ]$cellTypes2)
+  cellTypes_toTest &lt;- names(tab[which(tab &gt; 10)])
+  cellTypes_pair &lt;- expand.grid(cellTypes_toTest, cellTypes_toTest,
+                                stringsAsFactors = FALSE)
+  
+  
+  print(&quot;Calculate NN info&quot;)
+  
+  # Calcualte the pairwise distance
+  d &lt;- pairdist(cell_points, squared = FALSE)
+  diag(d) &lt;- Inf
+  
+  nn_list &lt;- apply(d, 1, function(x) which(x &lt; 50))
+  
+  nn_list_cellTypes &lt;- lapply(seq_along(nn_list), function(idx) {
+    if (length(nn_list[[idx]]) &gt; 0) {
+      paste(center_r[keep, ]$cellTypes2[idx],
+            center_r[keep, ]$cellTypes2[nn_list[[idx]]], sep = &quot;_&quot;)
+    }
+  })
+  
+  nn_list_cellTypes &lt;- unlist(nn_list_cellTypes)
+  nn_list_cellTypes &lt;- rearrange_string(nn_list_cellTypes)
+  nn_list_cellTypes &lt;- table(nn_list_cellTypes)
+  
+  
+  print(&quot;Calculate L&#39;stats (cellType1)&quot;)
+  
+  L_patient &lt;- list()
+  for (i in 1:nrow(cellTypes_pair)) {
+    # cat(cellTypes_pair[i,], &quot;...&quot;)
+    L_patient[[i]] &lt;- L_stats(cell_points, 
+                              from = cellTypes_pair[i, 1],
+                              to = cellTypes_pair[i, 2],
+                              L_dist = 50)
+  }
+  
+  L_patient &lt;- do.call(c, L_patient)
+  names(L_patient) &lt;- paste(cellTypes_pair[, 1], cellTypes_pair[, 2], sep = &quot;_&quot;)
+  
+  print(&quot;Calculate ANN&quot;)
+  
+  ann &lt;- list() 
+  
+  for (i in 1:length(tab)) {
+    center_r_tmp &lt;- center_r[keep, ][center_r$cellTypes2 == names(tab)[i], ]
+    cell_points_tmp &lt;- ppp(x = center_r_tmp[, 1], 
+                           y = center_r_tmp[, 2], 
+                           check = FALSE,
+                           yrange = c(0, round(max(coord_r[, 2]))), 
+                           xrange = c(0, round(max(coord_r[, 1]))),
+                           marks = as.factor(center_r_tmp$cellTypes2))
+    
+    ann[[i]] &lt;- nndist(cell_points_tmp, k = 1:10)
+  }
+  
+  names(ann) &lt;- names(tab)
+  
+
+  
+  
+  
+  
+  
+  
+  cell_points_cts &lt;- ppp(x = center_r[, 1], y = center_r[, 2], check = FALSE,
+                         yrange = c(0, round(max(coord_r[, 2]))), 
+                         xrange = c(0, round(max(coord_r[, 1]))),
+                         marks = t(exprsMat))
+  nncorr_protein &lt;- nncorr(cell_points_cts)[&quot;correlation&quot;, ]
+  d &lt;- pairdist(cell_points_cts, squared = FALSE)
+  diag(d) &lt;- Inf
+  
+  print(&quot;Calculate moran&#39;stats&quot;)
+  w &lt;- 1/d
+  
+  moran_cor &lt;- list()
+  for (i in 1:nrow(exprsMat)) {
+    cat(i, &quot;...&quot;)
+    moran_cor[[i]] &lt;- try(ape::Moran.I(exprsMat[i, ], w)$observed, silent = TRUE)
+    if (is(moran_cor[[i]], &quot;try-error&quot;)) {
+      moran_cor[[i]] &lt;- NA
+    }
+  }
+  names(moran_cor) &lt;- rownames(exprsMat)
+  moran_cor &lt;- unlist(moran_cor)
+  
+  
+  
+  spat_stats_list_all[[s]] &lt;- list(moran_cor = moran_cor,
+                                   nncorr_protein = nncorr_protein,
+                                   L_patient = L_patient,
+                                   ann = ann,
+                                   nn_list_cellTypes = nn_list_cellTypes)
+
+}
+
+sid_list &lt;- c()
+for (s in 1:length(tiff_name_list)) {
+  
+  str_name &lt;- paste(&quot;../../data/TNBC_shareCellData/&quot;, tiff_name_list[s], sep = &quot;&quot;)
+  
+  sample_id &lt;- as.numeric(gsub(&quot;p&quot;, &quot;&quot;, gsub(&quot;_labeledcellData.tiff&quot;, &quot;&quot;, tiff_name_list[s])))
+  sid_list &lt;- append(sid_list, sample_id)
+}
+
+names(spat_stats_list_all) &lt;- as.character(sid_list)
+saveRDS(spat_stats_list_all, file = &quot;output/mibi_spat_stats_list_all.rds&quot;)</code></pre>
+</div>
+</div>
+<div id="session-information" class="section level1">
+<h1>Session Information</h1>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS Catalina 10.15.4
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_AU.UTF-8/en_AU.UTF-8/en_AU.UTF-8/C/en_AU.UTF-8/en_AU.UTF-8
+## 
+## attached base packages:
+## [1] stats4    parallel  stats     graphics  grDevices utils     datasets 
+## [8] methods   base     
+## 
+## other attached packages:
+##  [1] SingleCellExperiment_1.8.0  SummarizedExperiment_1.16.0
+##  [3] DelayedArray_0.12.0         BiocParallel_1.20.0        
+##  [5] matrixStats_0.55.0          Biobase_2.46.0             
+##  [7] GenomicRanges_1.38.0        GenomeInfoDb_1.22.0        
+##  [9] IRanges_2.20.1              S4Vectors_0.24.3           
+## [11] BiocGenerics_0.32.0         ggthemes_4.2.0             
+## [13] spatstat_1.63-3             rpart_4.1-15               
+## [15] nlme_3.1-141                spatstat.data_1.4-3        
+## [17] ggpubr_0.2.4                magrittr_1.5               
+## [19] ggplot2_3.2.1               plyr_1.8.4                 
+## [21] raster_3.0-7                sp_1.3-2                   
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.3             lattice_0.20-38        deldir_0.1-25         
+##  [4] assertthat_0.2.1       digest_0.6.23          R6_2.4.1              
+##  [7] evaluate_0.14          tensor_1.5             pillar_1.4.2          
+## [10] zlibbioc_1.32.0        rlang_0.4.2            lazyeval_0.2.2        
+## [13] rstudioapi_0.10        Matrix_1.2-18          goftest_1.2-2         
+## [16] rmarkdown_1.18         splines_3.6.1          stringr_1.4.0         
+## [19] RCurl_1.95-4.12        polyclip_1.10-0        munsell_0.5.0         
+## [22] compiler_3.6.1         xfun_0.11              pkgconfig_2.0.3       
+## [25] mgcv_1.8-28            htmltools_0.4.0        tidyselect_0.2.5      
+## [28] tibble_2.1.3           GenomeInfoDbData_1.2.2 codetools_0.2-16      
+## [31] crayon_1.3.4           dplyr_0.8.3            withr_2.1.2           
+## [34] bitops_1.0-6           grid_3.6.1             gtable_0.3.0          
+## [37] lifecycle_0.1.0        scales_1.1.0           stringi_1.4.3         
+## [40] XVector_0.26.0         ggsignif_0.6.0         spatstat.utils_1.17-0 
+## [43] tools_3.6.1            glue_1.3.1             purrr_0.3.3           
+## [46] abind_1.4-5            yaml_2.2.0             colorspace_1.4-1      
+## [49] knitr_1.26</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("hide" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = false;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

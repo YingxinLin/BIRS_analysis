@@ -1,0 +1,578 @@
+---
+title: "Spatial Features"
+author: "Yingxin Lin"
+output:
+  html_document:
+    code_folding: hide
+    fig_height: 12
+    fig_width: 12
+    toc: yes
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning = FALSE, 
+                      message = FALSE, 
+                      cache = TRUE, 
+                      cache.lazy = TRUE)
+```
+
+
+# Package and data
+
+## Packages
+
+```{r}
+library(raster)
+library(plyr)
+library(ggpubr)
+library(spatstat)
+source("functions/image_analysis_function.R")
+```
+
+
+## MIBI-TOF data
+```{r}
+mibi.sce <- readRDS("../../sc-targeted-proteomics/data/mibi.sce_withDR.rds")
+colnames(mibi.sce) <- paste(mibi.sce$SampleID, mibi.sce$cellLabelInImage, sep = "_")
+
+mibi.sce$cellTypes <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                             as.character(mibi.sce$immune_group),
+                             as.character(mibi.sce$tumor_group))
+
+mibi.sce$cellTypes_group <- ifelse(as.character(mibi.sce$immune_group) != "not immune",
+                                   "Micro-environment",
+                                   "Tumour")
+
+
+selected_chanel_mibi <- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+interested_protein <- rownames(mibi.sce)[rowData(mibi.sce)$is_protein == 1]
+interested_protein <- interested_protein[!interested_protein %in% c("OX40")]
+interested_protein <- c("SMA", interested_protein)
+
+
+tiff_name_list <- list.files("../../sc-targeted-proteomics/data/TNBC_shareCellData/", pattern = ".tiff")
+tiff_name_list <- tiff_name_list[-24]
+
+```
+
+
+```{r}
+cellTypes_group_mibi_color <- tableau_color_pal("Tableau 10")(length(unique(mibi.sce$cellTypes_group)))
+cellTypes_group_mibi_color <- c(cellTypes_group_mibi_color, "black")
+names(cellTypes_group_mibi_color) <- c(unique(mibi.sce$cellTypes_group)[c(2,1)],
+                                       "Background")
+
+cellTypes_mibi_color <- tableau_color_pal("Classic 20")(length(unique(mibi.sce$cellTypes)))
+cellTypes_mibi_color <- c(cellTypes_mibi_color, "black")
+names(cellTypes_mibi_color) <- c(unique(mibi.sce$cellTypes), "Background")
+```
+
+
+# Visualisation of the image
+
+
+```{r}
+# example
+s = 27
+str_name <- paste("../../sc-targeted-proteomics/data/TNBC_shareCellData/", tiff_name_list[s], sep = "")
+cat("The .tiff file name is:")
+print(tiff_name_list[s])
+
+sample_id <- as.numeric(gsub("p", "", gsub("_labeledcellData.tiff", "", tiff_name_list[s])))
+
+r <- raster(str_name)
+# create an rater object
+r
+
+p_sce <- mibi.sce[, mibi.sce$SampleID == sample_id]
+p_sce <- p_sce[interested_protein, ]
+exprsMat <- assay(p_sce, "mibi_exprs")
+
+
+group_raster_values <- mapValueToCoord(r, 
+                                       p_sce$cellLabelInImage,
+                                       p_sce$cellTypes_group)
+
+
+cellTypes_raster_values <- mapValueToCoord(r, 
+                                           p_sce$cellLabelInImage,
+                                           p_sce$cellTypes)
+
+
+
+
+
+
+ddf <- rasterToPoints(r)
+ddf <- data.frame(ddf)
+colnames(ddf) <- c("X", "Y", "value")
+ddf$cellType_group <- group_raster_values
+ddf$cellType <- cellTypes_raster_values
+
+g_cellGroup <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType_group))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_group_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "Cell Type")
+
+g_cellTypes <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, fill = as.factor(cellType))) +
+  theme_minimal() +
+  scale_fill_manual(values = cellTypes_mibi_color) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "Cell Type")
+
+ggarrange(g_cellGroup, g_cellTypes, ncol = 2, nrow = 1, align = "hv")
+
+```
+
+
+
+# Spatial features
+
+## Create `ppp` object
+
+```{r}
+coord_r <- rasterToPoints(r)
+center_r_x <- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+group <- center_r_x$Group.1
+center_r_x <- center_r_x$x
+center_r_y <- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+center_r <- data.frame(x = center_r_x, y = center_r_y, group = group)
+cell_label <- raster::values(r)
+notInLabelnotInLabel <- unique(cell_label[!cell_label %in% p_sce$cellLabelInImage])
+
+
+r_cellType <- mapvalues((center_r$group), 
+                        from = notInLabelnotInLabel, 
+                        to = rep(0, length(notInLabelnotInLabel)))
+
+r_cellType <- mapvalues((r_cellType), 
+                        from = p_sce$cellLabelInImage, 
+                        to = p_sce$cellTypes)
+
+center_r$cellTypes <- r_cellType
+
+center_r <- center_r[center_r$cellTypes != "0", ]
+
+
+
+keep <- center_r$cellTypes != "Unidentified"
+
+cell_points <- ppp(x = center_r[keep, 1], 
+                   y = center_r[keep, 2], 
+                   check = FALSE,
+                   yrange = c(0, 2048), xrange = c(0, 2048),
+                   marks = as.factor(center_r[keep, ]$cellTypes))
+
+
+cell_points_cts <- ppp(x = center_r[, 1], y = center_r[, 2], 
+                       check = FALSE,
+                       yrange = c(0, round(max(coord_r[, 2]))), 
+                       xrange = c(0, round(max(coord_r[, 1]))),
+                       marks = t(exprsMat))
+```
+
+
+## Moran's I
+
+```{r}
+d <- pairdist(cell_points_cts, squared = FALSE)
+diag(d) <- Inf
+
+print("Calculate moran'stats")
+w <- 1/d
+
+moran_cor <- list()
+for (i in 1:nrow(exprsMat)) {
+  cat(i, "...")
+  moran_cor[[i]] <- try(ape::Moran.I(exprsMat[i, ], w)$observed, silent = TRUE)
+  if (is(moran_cor[[i]], "try-error")) {
+    moran_cor[[i]] <- NA
+  }
+}
+names(moran_cor) <- rownames(exprsMat)
+moran_cor <- unlist(moran_cor)
+sort(moran_cor)
+```
+
+
+```{r}
+exprsMat_in_raster <- apply(exprsMat, 1, function(x) {
+  mapValueToCoord(r, 
+                  p_sce$cellLabelInImage,
+                  x,
+                  cont = TRUE)
+})
+
+
+g_MPO <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, 
+                              fill = scale(exprsMat_in_raster[, "MPO"]))) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = viridis::viridis(120)[c(seq(1, 40, 2), 41:120)]) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "MPO")
+
+
+g_CD8 <- ggplot(NULL) + 
+  geom_raster(data = ddf, aes(X, Y, 
+                              fill = scale(exprsMat_in_raster[, "CD8"]))) +
+  theme_minimal() +
+  scale_fill_gradientn(colours = viridis::viridis(120)[c(seq(1, 40, 2), 41:120)]) +
+  coord_quickmap() +
+  theme(aspect.ratio = 1, legend.position = "right") +
+  labs(fill = "CD8")
+
+ggarrange(g_MPO, g_CD8, align = "hv", ncol = 2)
+```
+
+## Nearest Neighbour Correlation
+
+```{r}
+nncorr_protein <- nncorr(cell_points_cts)["correlation", ]
+nncorr_protein
+```
+
+```{r}
+
+nn_which_res <- nnwhich(cell_points_cts)
+
+dtp <- data.frame(MPO = marks(cell_points_cts)[, "MPO"],
+                  MPO_NN_k1 = marks(cell_points_cts)[nn_which_res, "MPO"],
+                  CD8 = marks(cell_points_cts)[, "CD8"],
+                  CD8_NN_k1 = marks(cell_points_cts)[nn_which_res, "CD8"])
+
+g1 <- ggplot(dtp, aes(x = MPO, y = MPO_NN_k1)) +
+  geom_point(alpha = 0.5, size = 2) +
+  theme_bw() +
+  scale_color_viridis_c() +
+  theme(aspect.ratio = 1, legend.position = "right", 
+        panel.grid = element_blank(),
+        text = element_text(size = 14)) +
+  ylab("MPO (1NN)")
+
+g2 <- ggplot(dtp, aes(x = CD8, y = CD8_NN_k1)) +
+  geom_point(alpha = 0.5, size = 2) +
+  theme_bw() +
+  scale_color_viridis_c() +
+  theme(aspect.ratio = 1, legend.position = "right", 
+        panel.grid = element_blank(),
+        text = element_text(size = 14)) +
+  ylab("CD8 (1NN)")
+
+ggarrange(g1, g2, ncol = 2, nrow = 1, align = "hv")
+```
+
+## Cell type interaction composition
+
+```{r}
+tab <- table(center_r[keep, ]$cellTypes)
+cellTypes_toTest <- names(tab[which(tab > 10)])
+cellTypes_pair <- expand.grid(cellTypes_toTest, cellTypes_toTest,
+                              stringsAsFactors = FALSE)
+
+
+print("Calculate NN info")
+
+# Calcualte the pairwise distance
+d <- pairdist(cell_points, squared = FALSE)
+diag(d) <- Inf
+
+nn_list <- apply(d, 1, function(x) which(x < 50))
+
+nn_list_cellTypes <- lapply(seq_along(nn_list), function(idx) {
+  if (length(nn_list[[idx]]) > 0) {
+    paste(center_r[keep, ]$cellTypes[idx],
+          center_r[keep, ]$cellTypes[nn_list[[idx]]], sep = "_")
+  }
+})
+
+nn_list_cellTypes <- unlist(nn_list_cellTypes)
+nn_list_cellTypes <- rearrange_string(nn_list_cellTypes)
+nn_list_cellTypes <- table(nn_list_cellTypes)
+cat("Top 10 cell type interaction")
+sort(nn_list_cellTypes/sum(nn_list_cellTypes), decreasing = TRUE)[1:10]
+```
+
+
+## L function
+
+```{r}
+
+print("Calculate L'stats (cellType1)")
+
+L_patient <- list()
+for (i in 1:nrow(cellTypes_pair)) {
+  # cat(cellTypes_pair[i,], "...")
+  L_patient[[i]] <- L_stats(cell_points, 
+                            from = cellTypes_pair[i, 1],
+                            to = cellTypes_pair[i, 2],
+                            L_dist = 50)
+}
+
+L_patient <- do.call(c, L_patient)
+names(L_patient) <- paste(cellTypes_pair[, 1], cellTypes_pair[, 2], sep = "_")
+
+```
+
+
+
+```{r}
+
+
+L <- spatstat::Lcross(cell_points, 
+                      from = "Neutrophils",
+                      to = "Neutrophils",
+                      verbose = FALSE,
+                      correction = "best")
+
+L_env <- envelope(cell_points, Lcross, 
+                  from = "Neutrophils",
+                  to = "Neutrophils")
+plot(L_env, xlim = c(0, 200), legend = FALSE)
+
+
+
+L <- spatstat::Lcross(cell_points, 
+                      from = "Neutrophils",
+                      to = "Keratin-positive tumor",
+                      verbose = FALSE,
+                      correction = "best")
+
+L_env <- envelope(cell_points, Lcross, 
+                  from = "Neutrophils",
+                  to = "Keratin-positive tumor")
+
+plot(L_env, xlim = c(0, 200), legend = FALSE)
+
+
+```
+
+
+
+```{r eval = FALSE}
+
+# The following for loop will generate the spatial features for all images 
+# in MIBI-TOF data
+
+spat_stats_list_all <- list()
+
+
+for (s in 1:length(tiff_name_list)) {
+  
+  str_name <- paste("../../data/TNBC_shareCellData/", tiff_name_list[s], sep = "")
+  
+  sample_id <- as.numeric(gsub("p", "", gsub("_labeledcellData.tiff", "", tiff_name_list[s])))
+  
+  print(str_name)
+  print(sample_id)
+  r <- raster(str_name)
+  r
+  
+  p_sce <- mibi.sce[, mibi.sce$SampleID == sample_id]
+  p_sce <- p_sce[interested_protein, ]
+  exprsMat <- assay(p_sce, "mibi_exprs")
+  
+  
+  
+  print(table(p_sce$immune_group))
+  
+  
+  group_raster_values <- mapValueToCoord(r, 
+                                         p_sce$cellLabelInImage,
+                                         p_sce$cellTypes_group)
+  
+  
+  cellTypes_raster_values <- mapValueToCoord(r, 
+                                             p_sce$cellLabelInImage,
+                                             p_sce$cellTypes)
+  
+  
+  
+  
+  
+  
+  ddf <- rasterToPoints(r)
+  ddf <- data.frame(ddf)
+  colnames(ddf) <- c("X", "Y", "value")
+  ddf$cellType_group <- group_raster_values
+  ddf$cellType <- cellTypes_raster_values
+  
+  
+  
+  
+  coord_r <- rasterToPoints(r)
+  center_r_x <- aggregate(coord_r[, 1], list(coord_r[, 3]), median)
+  group <- center_r_x$Group.1
+  center_r_x <- center_r_x$x
+  center_r_y <- aggregate(coord_r[, 2], list(coord_r[, 3]), median)$x
+  
+  center_r <- data.frame(x = center_r_x, y = center_r_y, group = group)
+  
+  cell_label <- raster::values(r)
+  notInLabelnotInLabel <- unique(cell_label[!cell_label %in% p_sce$cellLabelInImage])
+  
+  
+  
+  
+  r_cellType_group <- mapvalues((center_r$group), 
+                                from = notInLabelnotInLabel, 
+                                to = rep(0, length(notInLabelnotInLabel)))
+  
+  r_cellType_group <- mapvalues((r_cellType_group), 
+                                from = p_sce$cellLabelInImage, 
+                                to = p_sce$cellTypes_group)
+  
+  center_r$cellTypes <- r_cellType_group
+  
+  r_cellType <- mapvalues((center_r$group), 
+                          from = notInLabelnotInLabel, 
+                          to = rep(0, length(notInLabelnotInLabel)))
+  
+  r_cellType <- mapvalues((r_cellType), 
+                          from = p_sce$cellLabelInImage, 
+                          to = p_sce$cellTypes)
+  
+  center_r$cellTypes2 <- r_cellType
+  
+ 
+  
+  center_r <- center_r[center_r$cellTypes != "0", ]
+  
+  
+  print("For oringinal label")
+  
+  keep <- center_r$cellTypes2 != "Unidentified"
+  
+  cell_points <- ppp(x = center_r[keep, 1], 
+                     y = center_r[keep, 2], 
+                     check = FALSE,
+                     yrange = c(0, 2048), xrange = c(0, 2048),
+                     marks = as.factor(center_r[keep, ]$cellTypes2))
+  
+  tab <- table(center_r[keep, ]$cellTypes2)
+  cellTypes_toTest <- names(tab[which(tab > 10)])
+  cellTypes_pair <- expand.grid(cellTypes_toTest, cellTypes_toTest,
+                                stringsAsFactors = FALSE)
+  
+  
+  print("Calculate NN info")
+  
+  # Calcualte the pairwise distance
+  d <- pairdist(cell_points, squared = FALSE)
+  diag(d) <- Inf
+  
+  nn_list <- apply(d, 1, function(x) which(x < 50))
+  
+  nn_list_cellTypes <- lapply(seq_along(nn_list), function(idx) {
+    if (length(nn_list[[idx]]) > 0) {
+      paste(center_r[keep, ]$cellTypes2[idx],
+            center_r[keep, ]$cellTypes2[nn_list[[idx]]], sep = "_")
+    }
+  })
+  
+  nn_list_cellTypes <- unlist(nn_list_cellTypes)
+  nn_list_cellTypes <- rearrange_string(nn_list_cellTypes)
+  nn_list_cellTypes <- table(nn_list_cellTypes)
+  
+  
+  print("Calculate L'stats (cellType1)")
+  
+  L_patient <- list()
+  for (i in 1:nrow(cellTypes_pair)) {
+    # cat(cellTypes_pair[i,], "...")
+    L_patient[[i]] <- L_stats(cell_points, 
+                              from = cellTypes_pair[i, 1],
+                              to = cellTypes_pair[i, 2],
+                              L_dist = 50)
+  }
+  
+  L_patient <- do.call(c, L_patient)
+  names(L_patient) <- paste(cellTypes_pair[, 1], cellTypes_pair[, 2], sep = "_")
+  
+  print("Calculate ANN")
+  
+  ann <- list() 
+  
+  for (i in 1:length(tab)) {
+    center_r_tmp <- center_r[keep, ][center_r$cellTypes2 == names(tab)[i], ]
+    cell_points_tmp <- ppp(x = center_r_tmp[, 1], 
+                           y = center_r_tmp[, 2], 
+                           check = FALSE,
+                           yrange = c(0, round(max(coord_r[, 2]))), 
+                           xrange = c(0, round(max(coord_r[, 1]))),
+                           marks = as.factor(center_r_tmp$cellTypes2))
+    
+    ann[[i]] <- nndist(cell_points_tmp, k = 1:10)
+  }
+  
+  names(ann) <- names(tab)
+  
+
+  
+  
+  
+  
+  
+  
+  cell_points_cts <- ppp(x = center_r[, 1], y = center_r[, 2], check = FALSE,
+                         yrange = c(0, round(max(coord_r[, 2]))), 
+                         xrange = c(0, round(max(coord_r[, 1]))),
+                         marks = t(exprsMat))
+  nncorr_protein <- nncorr(cell_points_cts)["correlation", ]
+  d <- pairdist(cell_points_cts, squared = FALSE)
+  diag(d) <- Inf
+  
+  print("Calculate moran'stats")
+  w <- 1/d
+  
+  moran_cor <- list()
+  for (i in 1:nrow(exprsMat)) {
+    cat(i, "...")
+    moran_cor[[i]] <- try(ape::Moran.I(exprsMat[i, ], w)$observed, silent = TRUE)
+    if (is(moran_cor[[i]], "try-error")) {
+      moran_cor[[i]] <- NA
+    }
+  }
+  names(moran_cor) <- rownames(exprsMat)
+  moran_cor <- unlist(moran_cor)
+  
+  
+  
+  spat_stats_list_all[[s]] <- list(moran_cor = moran_cor,
+                                   nncorr_protein = nncorr_protein,
+                                   L_patient = L_patient,
+                                   ann = ann,
+                                   nn_list_cellTypes = nn_list_cellTypes)
+
+}
+
+sid_list <- c()
+for (s in 1:length(tiff_name_list)) {
+  
+  str_name <- paste("../../data/TNBC_shareCellData/", tiff_name_list[s], sep = "")
+  
+  sample_id <- as.numeric(gsub("p", "", gsub("_labeledcellData.tiff", "", tiff_name_list[s])))
+  sid_list <- append(sid_list, sample_id)
+}
+
+names(spat_stats_list_all) <- as.character(sid_list)
+saveRDS(spat_stats_list_all, file = "output/mibi_spat_stats_list_all.rds")
+```
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
+

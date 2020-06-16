@@ -7,6 +7,8 @@ navbar:
       href: index.html
     - text: "Preliminary Analysis"
       href: preliminary.html
+    - text: "Spatial Features"
+      href: spatial_features.html
 output:
   html_document:
     theme: cosmo
